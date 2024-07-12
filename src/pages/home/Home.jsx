@@ -1,4 +1,4 @@
-// Home.js
+// Home.jsx
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Topbar from "../../components/topbar/Topbar";
