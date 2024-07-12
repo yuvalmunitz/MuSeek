@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { auth, db } from '../firebase-config';
-import { getOrCreateUser } from '../users'; // Adjust the path to your users.js file
+import { getOrCreateUser } from 'users'; // Adjust the path to your users.js file
 
 export const AuthContext = createContext();
 
