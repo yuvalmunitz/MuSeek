@@ -19,8 +19,10 @@ export const signUpWithGoogle = async () => {
             posts: [],
             favorites: [],
             genres: [],
-            userType: ""
-            // TODO : optional to add comments array with references (pid, cid)
+            userType: "",
+            performer: "",
+            recorder: "",
+            experience: 0
         };
 
         // Add user to Firestore
@@ -67,18 +69,6 @@ export const updateUserBio = async (uid, bio) => {
     }
 };
 
-// Function to update user's posts
-// TODO : split to add and remove
-export const updateUserPosts = async (uid, posts) => {
-    try {
-        const userRef = doc(db, "users", uid);
-        await updateDoc(userRef, { posts });
-    } catch (e) {
-        console.error("Error updating posts: ", e);
-        throw new Error(e.message);
-    }
-};
-
 // Function to add a favorite to user's favorites
 export const addFavorite = async (uid, favorite) => {
     try {
@@ -106,6 +96,7 @@ export const removeFavorite = async (uid, favorite) => {
         throw new Error(e.message);
     }
 };
+
 // Function to update user's genres
 export const updateUserGenres = async (uid, genres) => {
     try {
@@ -124,6 +115,39 @@ export const updateUserUserType = async (uid, userType) => {
         await updateDoc(userRef, { userType });
     } catch (e) {
         console.error("Error updating user type: ", e);
+        throw new Error(e.message);
+    }
+};
+
+// Function to update user's performer
+export const updateUserPerformer = async (uid, performer) => {
+    try {
+        const userRef = doc(db, "users", uid);
+        await updateDoc(userRef, { performer });
+    } catch (e) {
+        console.error("Error updating performer: ", e);
+        throw new Error(e.message);
+    }
+};
+
+// Function to update user's recorder
+export const updateUserRecorder = async (uid, recorder) => {
+    try {
+        const userRef = doc(db, "users", uid);
+        await updateDoc(userRef, { recorder });
+    } catch (e) {
+        console.error("Error updating recorder: ", e);
+        throw new Error(e.message);
+    }
+};
+
+// Function to update user's experience
+export const updateUserExperience = async (uid, experience) => {
+    try {
+        const userRef = doc(db, "users", uid);
+        await updateDoc(userRef, { experience });
+    } catch (e) {
+        console.error("Error updating experience: ", e);
         throw new Error(e.message);
     }
 };
