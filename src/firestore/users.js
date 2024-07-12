@@ -1,38 +1,81 @@
-import { db, auth, provider, signInWithPopup } from '../firebase-config';
-import { getDoc, doc, deleteDoc, setDoc, updateDoc } from 'firebase/firestore';
-import { deleteUser as deleteAuthUser } from 'firebase/auth';
+import { auth, db } from '../firebase-config';
+import { getDoc, doc, setDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 
-// Function to sign up with Google and create user in Firestore
-export const signUpWithGoogle = async () => {
-    try {
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
-
-        // TODO : check if getting photoURL from auth
-
-        // Create user object
-        const userObj = {
-            displayName: user.displayName,
-            email: user.email,
-            photoURL: user.photoURL,
+export const getOrCreateUser = async (uid) => {
+    const userRef = doc(db, "users", uid);
+    const userSnap = await getDoc(userRef);
+    
+    if (userSnap.exists()) {
+        return { id: userSnap.id, ...userSnap.data() };
+    } else {
+        const newUser = {
+            displayName: auth.currentUser?.displayName || "",
+            email: auth.currentUser?.email || "",
+            photoURL: auth.currentUser?.photoURL || "",
             bio: "",
             posts: [],
             favorites: [],
             genres: [],
-            userType: ""
-            // TODO : optional to add comments array with references (pid, cid)
+            userType: "",
+            performer: "",
+            recorder: "",
+            experience: ""
         };
+        await setDoc(userRef, newUser);
+        return { id: uid, ...newUser };
+    }
+};
 
-        // Add user to Firestore
-        const userRef = doc(db, "users", user.uid);
-        await setDoc(userRef, userObj);
-
-        return userObj;
+export const updateUserGenres = async (uid, genres) => {
+    try {
+        const userRef = doc(db, "users", uid);
+        await updateDoc(userRef, { genres });
     } catch (e) {
-        console.error("Error signing up with Google: ", e);
+        console.error("Error updating genres: ", e);
         throw new Error(e.message);
     }
 };
+
+export const updateUserType = async (uid, userType) => {
+    try {
+        const userRef = doc(db, "users", uid);
+        await updateDoc(userRef, { userType });
+    } catch (e) {
+        console.error("Error updating user type: ", e);
+        throw new Error(e.message);
+    }
+};
+
+export const updateUserPerformer = async (uid, performer) => {
+    try {
+        const userRef = doc(db, "users", uid);
+        await updateDoc(userRef, { performer });
+    } catch (e) {
+        console.error("Error updating performer status: ", e);
+        throw new Error(e.message);
+    }
+};
+
+export const updateUserRecorder = async (uid, recorder) => {
+    try {
+        const userRef = doc(db, "users", uid);
+        await updateDoc(userRef, { recorder });
+    } catch (e) {
+        console.error("Error updating recorder status: ", e);
+        throw new Error(e.message);
+    }
+};
+
+export const updateUserExperience = async (uid, experience) => {
+    try {
+        const userRef = doc(db, "users", uid);
+        await updateDoc(userRef, { experience });
+    } catch (e) {
+        console.error("Error updating experience: ", e);
+        throw new Error(e.message);
+    }
+};
+
 
 // Function to update user's display name
 export const updateUserDisplayName = async (uid, displayName) => {
@@ -68,7 +111,6 @@ export const updateUserBio = async (uid, bio) => {
 };
 
 // Function to update user's posts
-// TODO : split to add and remove
 export const updateUserPosts = async (uid, posts) => {
     try {
         const userRef = doc(db, "users", uid);
@@ -106,16 +148,7 @@ export const removeFavorite = async (uid, favorite) => {
         throw new Error(e.message);
     }
 };
-// Function to update user's genres
-export const updateUserGenres = async (uid, genres) => {
-    try {
-        const userRef = doc(db, "users", uid);
-        await updateDoc(userRef, { genres });
-    } catch (e) {
-        console.error("Error updating genres: ", e);
-        throw new Error(e.message);
-    }
-};
+
 
 // Function to update user's user type
 export const updateUserUserType = async (uid, userType) => {
@@ -127,8 +160,6 @@ export const updateUserUserType = async (uid, userType) => {
         throw new Error(e.message);
     }
 };
-
-// Function to get user details
 export const getUser = async (uid) => {
     try {
         const userRef = doc(db, "users", uid);
@@ -145,27 +176,26 @@ export const getUser = async (uid) => {
     }
 };
 
-// Function to delete a user from Firestore and Authentication
-export const deleteUser = async (uid) => {
-    try {
-        // Delete user from Firestore
-        const userRef = doc(db, "users", uid);
-        await deleteDoc(userRef);
 
-        // Delete user from Firebase Authentication
-        const user = auth.currentUser;
-        if (user && user.uid === uid) {
-            await deleteAuthUser(user);
-        } else {
-            console.error("Error: No user is currently signed in or UID does not match.");
-            throw new Error("No user is currently signed in or UID does not match.");
-        }
+// // Function to delete a user from Firestore and Authentication
+// export const deleteUser = async (uid) => {
+//     try {
+//         // Delete user from Firestore
+//         const userRef = doc(db, "users", uid);
+//         await deleteDoc(userRef);
 
-        // TODO : delete all posts created
+//         // Delete user from Firebase Authentication
+//         const user = auth.currentUser;
+//         if (user && user.uid === uid) {
+//             await deleteAuthUser(user);
+//         } else {
+//             console.error("Error: No user is currently signed in or UID does not match.");
+//             throw new Error("No user is currently signed in or UID does not match.");
+//         }
 
-        console.log("User deleted");
-    } catch (e) {
-        console.error("Error deleting user: ", e);
-        throw new Error(e.message);
-    }
-};
+//         console.log("User deleted");
+//     } catch (e) {
+//         console.error("Error deleting user: ", e);
+//         throw new Error(e.message);
+//     }
+// };

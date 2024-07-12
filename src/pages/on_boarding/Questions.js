@@ -1,26 +1,36 @@
-// questions.js
 const questions = [
-    
-    {
-      question: 'Are you a composer or a lyricist?',
-      options: ['Composer', 'Lyricist', 'Both'],
-    },
-    {
-      question: 'Are you a performer?',
-      options: ['Yes', 'No'],
-    },
-    {
-      question: 'Are you a recording artist?',
-      options: ['Yes', 'No'],
-    },
-    {
-      question: 'Have long have you been creating?',
-      options: ['A year or less', '1-3 years', '3-10 years', 'More than 10 years'],
-    },
-    {
-      question: 'What genres of music do you enjoy?',
-      options: ['Pop', 'Rock', 'Jazz', 'Classical', 'Hip-hop', 'Electronic', 'R&B', 'Latin', 'Blues', 'Metal', 'Reggae', 'Oriental', 'Fusion', 'Prog', 'Funk', 'Folk'],
-    },
-  ];
   
-  export default questions;
+  {
+    question: "What type of user are you?",
+    options: ["Listener", "Artist", "Producer", "Industry Professional"],
+    isMultipleChoice: false,
+    field: "userType"
+  },
+  {
+    question: "Are you a performer?",
+    options: ["Yes", "No"],
+    isMultipleChoice: false,
+    field: "performer"
+  },
+  {
+    question: "Do you record music?",
+    options: ["Yes", "No"],
+    isMultipleChoice: false,
+    field: "recorder"
+  },
+  {
+    question: "How much experience do you have in the music industry?",
+    options: ["Beginner", "Intermediate", "Advanced", "Professional"],
+    isMultipleChoice: false,
+    field: "experience"
+  },
+
+  {
+    question: "What genres of music do you enjoy?",
+    options: ["Rock", "Pop", "Jazz", "Classical", "Hip Hop", "Electronic", "Country", "R&B", "Folk", "Metal"],
+    isMultipleChoice: true,
+    field: "genres"
+  }
+];
+
+export default questions;
