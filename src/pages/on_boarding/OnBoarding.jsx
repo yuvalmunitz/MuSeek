@@ -1,8 +1,32 @@
-import React, { useState } from 'react';
-import { Button, Container, Box, Typography, Paper, FormControlLabel, Checkbox, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { 
+  Button, 
+  Container, 
+  Box, 
+  Typography, 
+  Paper, 
+  FormControlLabel, 
+  Checkbox, 
+  Radio,
+  RadioGroup,
+  Dialog, 
+  DialogTitle, 
+  DialogContent, 
+  DialogActions, 
+  CircularProgress 
+} from '@mui/material';
 import { styled } from '@mui/system';
-import questions from './Questions';
 import { useNavigate } from 'react-router-dom';
+import { auth } from '../../firebase-config';
+import { 
+  getOrCreateUser, 
+  updateUserGenres, 
+  updateUserType, 
+  updateUserPerformer, 
+  updateUserRecorder, 
+  updateUserExperience 
+} from '../../firestore/users';
+import questions from './Questions';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   backgroundColor: '#e0dcd2',
@@ -34,6 +58,13 @@ const StyledCheckbox = styled(Checkbox)(({ theme }) => ({
   },
 }));
 
+const StyledRadio = styled(Radio)(({ theme }) => ({
+  color: '#8d6e63',
+  '&.Mui-checked': {
+    color: '#5d4037',
+  },
+}));
+
 const StyledDialog = styled(Dialog)(({ theme }) => ({
   '& .MuiPaper-root': {
     backgroundColor: '#f5f5f5',
@@ -52,28 +83,77 @@ const OutlinedStyledButton = styled(Button)(({ theme }) => ({
 }));
 
 const OnBoarding = () => {
-  const [answers, setAnswers] = useState({});
+  const [answers, setAnswers] = useState({
+    genres: [],
+    userType: "",
+    performer: "",
+    recorder: "",
+    experience: ""
+  });
   const [openCopyrightDialog, setOpenCopyrightDialog] = useState(false);
   const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const handleToggle = (questionIndex, option) => {
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (authUser) => {
+      if (authUser) {
+        try {
+          const userDetails = await getOrCreateUser(authUser.uid);
+          setUser(userDetails);
+        } catch (error) {
+          console.error("Error fetching or creating user:", error);
+          setError("Failed to fetch or create user. Please try again.");
+        }
+      } else {
+        console.log("No authenticated user found");
+        navigate('/register');
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [navigate]);
+
+  const handleToggle = (field, option) => {
     setAnswers((prev) => {
       const newAnswers = { ...prev };
-      if (!newAnswers[questionIndex]) newAnswers[questionIndex] = [];
-      if (newAnswers[questionIndex].includes(option)) {
-        newAnswers[questionIndex] = newAnswers[questionIndex].filter(
-          (answer) => answer !== option
-        );
+      const question = questions.find(q => q.field === field);
+      if (question.isMultipleChoice) {
+        if (!newAnswers[field]) newAnswers[field] = [];
+        if (newAnswers[field].includes(option)) {
+          newAnswers[field] = newAnswers[field].filter(
+            (answer) => answer !== option
+          );
+        } else {
+          newAnswers[field] = [...newAnswers[field], option];
+        }
       } else {
-        newAnswers[questionIndex].push(option);
+        newAnswers[field] = option;
       }
       return newAnswers;
     });
   };
 
-  const handleSubmit = () => {
-    console.log('Final Answers:', answers);
-    setOpenCopyrightDialog(true);
+  const handleSubmit = async () => {
+    if (user) {
+      try {
+        await updateUserGenres(user.id, answers.genres);
+        await updateUserType(user.id, answers.userType);
+        await updateUserPerformer(user.id, answers.performer);
+        await updateUserRecorder(user.id, answers.recorder);
+        await updateUserExperience(user.id, answers.experience);
+        
+        console.log('Onboarding answers saved:', answers);
+        setOpenCopyrightDialog(true);
+      } catch (error) {
+        console.error('Error saving onboarding answers:', error);
+        setError('Failed to save answers. Please try again.');
+      }
+    } else {
+      setError('No user found. Please try logging in again.');
+    }
   };
 
   const handleSkip = () => {
@@ -90,6 +170,37 @@ const OnBoarding = () => {
     // Optionally, you can show a message or take other actions if the user disagrees
   };
 
+  if (loading) {
+    return (
+      <Container>
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+          <CircularProgress />
+          <Typography variant="h6" style={{ marginLeft: 20 }}>Loading user data...</Typography>
+        </Box>
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container>
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+          <Typography color="error">{error}</Typography>
+        </Box>
+      </Container>
+    );
+  }
+
+  if (!user) {
+    return (
+      <Container>
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+          <Typography>No user found. Please <Button onClick={() => navigate('/register')}>register</Button> or <Button onClick={() => navigate('/login')}>login</Button>.</Typography>
+        </Box>
+      </Container>
+    );
+  }
+
   return (
     <StyledContainer>
       <Typography variant="h4" gutterBottom>
@@ -103,18 +214,36 @@ const OnBoarding = () => {
           <Typography variant="h6" gutterBottom>
             {q.question}
           </Typography>
-          {q.options.map((option) => (
-            <FormControlLabel
-              key={option}
-              control={
-                <StyledCheckbox
-                  checked={answers[index]?.includes(option) || false}
-                  onChange={() => handleToggle(index, option)}
+          {q.isMultipleChoice ? (
+            <Box>
+              {q.options.map((option) => (
+                <FormControlLabel
+                  key={option}
+                  control={
+                    <StyledCheckbox
+                      checked={answers[q.field]?.includes(option) || false}
+                      onChange={() => handleToggle(q.field, option)}
+                    />
+                  }
+                  label={option}
                 />
-              }
-              label={option}
-            />
-          ))}
+              ))}
+            </Box>
+          ) : (
+            <RadioGroup
+              value={answers[q.field] || ''}
+              onChange={(e) => handleToggle(q.field, e.target.value)}
+            >
+              {q.options.map((option) => (
+                <FormControlLabel
+                  key={option}
+                  value={option}
+                  control={<StyledRadio />}
+                  label={option}
+                />
+              ))}
+            </RadioGroup>
+          )}
         </StyledPaper>
       ))}
       <Box mt={3}>
