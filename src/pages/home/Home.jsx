@@ -13,7 +13,7 @@ const HomeContainer = styled.div`
 `;
 
 function Home() {
-  const { user, userData, logout } = useContext(AuthContext);
+  const { currentUser } = useContext(AuthContext);
   const [showFavorites, setShowFavorites] = useState(false);
 
   const openFavorites = () => {
