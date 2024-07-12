@@ -1,10 +1,11 @@
 // Home.js
 import React, { useState, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Topbar from "../../components/topbar/Topbar";
 import Feed from '../../components/HomeComponents/feed/Feed';
 import Rightbar from "../../components/rightbar/Rightbar";
 import styled from 'styled-components';
-import { AuthContext } from 'firestore/AuthContext'; // Adjust the path as needed
+import { AuthContext } from '../../firestore/AuthContext'; // Adjust the path as needed
 
 const HomeContainer = styled.div`
   display: flex;
@@ -13,8 +14,9 @@ const HomeContainer = styled.div`
 `;
 
 function Home() {
-  const { user, login, logout } = useContext(AuthContext);
+  const { user, userData, logout } = useContext(AuthContext);
   const [showFavorites, setShowFavorites] = useState(false);
+  const navigate = useNavigate(); // Hook from react-router-dom
 
   const openFavorites = () => {
     setShowFavorites(true);
@@ -22,6 +24,10 @@ function Home() {
 
   const closeFavorites = () => {
     setShowFavorites(false);
+  };
+
+  const handleLoginRedirect = () => {
+    navigate('/Login'); // Redirect to Login page
   };
 
   return (
@@ -35,16 +41,20 @@ function Home() {
         />
         <Rightbar openFavorites={openFavorites} />
       </HomeContainer>
-      // test begin
       {user ? (
         <div>
           <p>Welcome, {user.displayName}!</p>
           <button onClick={logout}>Logout</button>
         </div>
       ) : (
-        <button onClick={() => login({ name: "John Doe" })}>Login</button>
+        <button onClick={handleLoginRedirect}>Login</button>
       )}
-      // test end
+      {userData && (
+        <div>
+          <p>Bio: {userData.bio}</p>
+          <p>User ID: {userData.id}</p>
+        </div>
+      )}
     </>
   );
 }
