@@ -22,7 +22,7 @@ export const signUpWithGoogle = async () => {
             userType: "",
             performer: "",
             recorder: "",
-            experience: 0
+            experience: ""
         };
 
         // Add user to Firestore
@@ -32,6 +32,35 @@ export const signUpWithGoogle = async () => {
         return userObj;
     } catch (e) {
         console.error("Error signing up with Google: ", e);
+        throw new Error(e.message);
+    }
+};
+
+// Function to add user to Firestore
+export const createFirestoreUser = async (user) => {
+    try {
+        // Create user object
+        const userObj = {
+            displayName: user.displayName,
+            email: user.email,
+            photoURL: user.photoURL,
+            bio: "",
+            posts: [],
+            favorites: [],
+            genres: [],
+            userType: "",
+            performer: "",
+            recorder: "",
+            experience: ""
+        };
+
+        // Add user to Firestore
+        const userRef = doc(db, "users", user.uid);
+        await setDoc(userRef, userObj);
+
+        return userObj;
+    } catch (e) {
+        console.error("Error creating the user in Firestore: ", e);
         throw new Error(e.message);
     }
 };
