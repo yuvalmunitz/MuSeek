@@ -3,6 +3,9 @@ import Topbar from "../../components/topbar/Topbar";
 import Feed from '../../components/HomeComponents/feed/Feed';
 import Rightbar from "../../components/rightbar/Rightbar";
 import styled from 'styled-components';
+// TODO : customise the page for the user
+// import { getUserData } from '../../firestore/users';
+// import { auth } from '../../firebase-config';
 
 const HomeContainer = styled.div`
   display: flex;
