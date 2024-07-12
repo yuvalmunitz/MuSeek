@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { auth, provider, signInWithPopup } from '../../firebase-config'; // Update the path as needed
 import GoogleIcon from '@mui/icons-material/Google'; // Import the Google icon
-
+// import { createFirestoreUser } from '../../firestore/users';
 const RegisterContainer = styled.div`
   width: 100vw;
   height: 100vh;
@@ -100,6 +100,7 @@ export default function Register() {
   const handleGoogleSignIn = () => {
     signInWithPopup(auth, provider)
       .then((result) => {
+        //createFirestoreUser(user)
         console.log(result.user);
         // Redirect to onboarding page
         navigate('/onboarding');
