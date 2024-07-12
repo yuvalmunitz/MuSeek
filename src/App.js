@@ -12,12 +12,14 @@ import MusicPlayer from "./pages/musicPlayer/MusicPlayer";
 import PDFReader from "./pages/pdfReader/PdfReader";
 import OnBoarding1 from './pages/on_boarding/OnBoarding';
 
-export default function App() {
+
+
+function App() {
   return (
     <AuthProvider>
       <Router>
         <Routes>
-          <Route path="/" element={<Register />} />
+        <Route path="/" element={<Register />} />
           <Route path="/OnBoarding" element={<OnBoarding1 />} />
           <Route path="/Profile" element={<Profile />} />
           <Route path="/Home" element={<Home />} />
@@ -31,3 +33,35 @@ export default function App() {
     </AuthProvider>
   );
 }
+
+export default App;
+
+
+// export default function App() {
+//   return (
+//     <AuthProvider>
+//       <Router>
+//         <Routes>
+//           <Route path="/" element={<Register />} />
+//           <Route path="/OnBoarding" element={<OnBoarding1 />} />
+//           <Route path="/Profile" element={<Profile />} />
+//           <Route path="/Home" element={<Home />} />
+//           <Route path="/Login" element={<Login />} />
+//           <Route path="/Register" element={<Register />} />
+//           <Route path="/Inbox" element={<Inbox />} />
+//           <Route path="/MusicPlayer" element={<MusicPlayer />} />
+//           <Route path="/PDFReader" element={<PDFReader />} />
+//         </Routes>
+//       </Router>
+//     </AuthProvider>
+//   );
+// }
+
+
+
+// import React from 'react';
+// import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+// import { AuthProvider } from './firestore/AuthContext';
+// import Home from './pages/home/Home';
+// import OnBoarding from './pages/on_boarding/OnBoarding';
+// // Import other components as needed
