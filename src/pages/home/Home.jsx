@@ -4,7 +4,7 @@ import Topbar from "../../components/topbar/Topbar";
 import Feed from '../../components/HomeComponents/feed/Feed';
 import Rightbar from "../../components/rightbar/Rightbar";
 import styled from 'styled-components';
-import { AuthContext } from '../../firestore/AuthContext'; // Adjust the path as needed
+import { AuthContext } from '../../firestore/AuthContext';
 
 const HomeContainer = styled.div`
   display: flex;
