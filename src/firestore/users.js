@@ -1,4 +1,4 @@
-import { auth, db } from '../firebase-config';
+import { auth, db, storage } from '../firebase-config';
 import { getDoc, doc, setDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 
 export const getOrCreateUser = async (uid) => {
@@ -8,21 +8,36 @@ export const getOrCreateUser = async (uid) => {
     if (userSnap.exists()) {
         return { id: userSnap.id, ...userSnap.data() };
     } else {
-        const newUser = {
-            displayName: auth.currentUser?.displayName || "",
-            email: auth.currentUser?.email || "",
-            photoURL: auth.currentUser?.photoURL || "",
-            bio: "",
-            posts: [],
-            favorites: [],
-            genres: [],
-            userType: "",
-            performer: "",
-            recorder: "",
-            experience: ""
-        };
-        await setDoc(userRef, newUser);
-        return { id: uid, ...newUser };
+        try {
+            const googlePhotoUrl = auth.currentUser.photoURL;
+
+            // Download the photo and upload to Firebase Storage
+            const response = await fetch(googlePhotoUrl);
+            const blob = await response.blob();
+            const storageRef = storage.ref();
+            const photoRef = storageRef.child(`userPhotos/${auth.currentUser.uid}/profile.jpg`);
+            await photoRef.put(blob);
+            const photoURL = await photoRef.getDownloadURL();
+
+            const newUser = {
+                displayName: auth.currentUser?.displayName || "",
+                email: auth.currentUser?.email || "",
+                photoURL: photoURL || "",
+                bio: "",
+                posts: [],
+                favorites: [],
+                genres: [],
+                userType: "",
+                performer: "",
+                recorder: "",
+                experience: ""
+            };
+            await setDoc(userRef, newUser);
+            return { id: uid, ...newUser };
+        } catch (error) {
+            console.error("Error creating user document:", error);
+            throw new Error(error.message);
+        }
     }
 };
 
@@ -138,16 +153,6 @@ export const removeFavorite = async (uid, favorite) => {
         console.log(`Removed ${favorite} from favorites for user ${uid}`);
     } catch (e) {
         console.error("Error removing favorite: ", e);
-        throw new Error(e.message);
-    }
-};
-
-export const updateUserUserType = async (uid, userType) => {
-    try {
-        const userRef = doc(db, "users", uid);
-        await updateDoc(userRef, { userType });
-    } catch (e) {
-        console.error("Error updating user type: ", e);
         throw new Error(e.message);
     }
 };
