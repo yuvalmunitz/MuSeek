@@ -1,5 +1,9 @@
-import { auth, db, storage } from '../firebase-config';
+// import { auth, db, storage } from '../firebase-config';
+// import { getDoc, doc, setDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import{ auth, db, storage } from '../firebase-config';
 import { getDoc, doc, setDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';  // Add this line
+
 
 export const getOrCreateUser = async (uid) => {
     const userRef = doc(db, "users", uid);
@@ -14,10 +18,9 @@ export const getOrCreateUser = async (uid) => {
             // Download the photo and upload to Firebase Storage
             const response = await fetch(googlePhotoUrl);
             const blob = await response.blob();
-            const storageRef = storage.ref();
-            const photoRef = storageRef.child(`userPhotos/${auth.currentUser.uid}/profile.jpg`);
-            await photoRef.put(blob);
-            const photoURL = await photoRef.getDownloadURL();
+            const storageRef = ref(storage, `userPhotos/${auth.currentUser.uid}/profile.jpg`);
+            await uploadBytes(storageRef, blob);
+            const photoURL = await getDownloadURL(storageRef);
 
             const newUser = {
                 displayName: auth.currentUser?.displayName || "",

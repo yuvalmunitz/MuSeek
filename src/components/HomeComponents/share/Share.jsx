@@ -6,6 +6,7 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 import CloseIcon from '@mui/icons-material/Close';
 import { Button, Slider, Typography, Dialog, DialogTitle, DialogContent, DialogActions, IconButton } from '@mui/material';
+import { useAuth } from '../../../firestore/AuthContext';
 
 const ShareWrapper = styled.div`
   padding: 10px;
@@ -140,6 +141,7 @@ const CloseButton = styled(IconButton)`
 `;
 
 export default function Share({ addNewPost }) {
+  const { currentUser } = useAuth();  // Add this line
   const [description, setDescription] = useState('');
   const [audioFile, setAudioFile] = useState(null);
   const [pdfFile, setPdfFile] = useState(null);
@@ -156,7 +158,7 @@ export default function Share({ addNewPost }) {
       audio: audioFile,
       pdf: pdfFile,
       date: new Date().toISOString(),
-      userId: 1,
+      userId: currentUser.uid,  // Use the current user's ID
       like: 0,
       comment: 0,
     };
@@ -168,6 +170,7 @@ export default function Share({ addNewPost }) {
     setCurrentTime(0);
     setDuration(0);
   };
+
   const handleAudioUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -230,9 +233,9 @@ export default function Share({ addNewPost }) {
     <ShareContainer>
       <ShareWrapper>
         <ShareTop>
-          <ShareProfileImg src="/assets/person/1.jpeg" alt="" />
+          <ShareProfileImg src={currentUser.photoURL} alt={currentUser.displayName} />
           <ShareInput
-            placeholder="Write a description"
+            placeholder={`What's on your mind, ${currentUser.displayName}?`}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />

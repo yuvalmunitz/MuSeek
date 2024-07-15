@@ -2,17 +2,18 @@ import React from 'react';
 import styled from 'styled-components';
 import { Search, Chat } from '@mui/icons-material';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../firestore/AuthContext';
 
 const TopbarContainer = styled.div`
   height: 50px;
   width: 100%;
-  background-color: #6d4c41; /* Medium brown background */
+  background-color: #6d4c41;
   display: flex;
   align-items: center;
   position: sticky;
   top: 0;
   z-index: 999;
-  padding: 80 120; /* Added padding to adjust overall left and right margins */
+  padding: 80 120;
 `;
 
 const TopbarLeft = styled.div`
@@ -63,37 +64,16 @@ const TopbarRight = styled.div`
   color: white;
 `;
 
-// const TopbarLink = styled.span`
-//   margin-right: 10px; /* Decreased margin-right to move elements to the left */
-//   font-size: 14px;
-//   cursor: pointer;
-// `;
-
 const TopbarIcons = styled.div`
   display: flex;
   align-items: center;
 `;
 
 const TopbarIconItem = styled.div`
-  margin-right: 10px; /* Decreased margin-right to move elements to the left */
+  margin-right: 10px;
   cursor: pointer;
   position: relative;
 `;
-
-// const TopbarIconBadge = styled.span`
-//   width: 15px;
-//   height: 15px;
-//   background-color: red;
-//   border-radius: 50%;
-//   color: white;
-//   position: absolute;
-//   top: -5px;
-//   right: -5px;
-//   display: flex;
-//   align-items: center;
-//   justify-content: center;
-//   font-size: 12px;
-// `;
 
 const StyledButton = styled.button`
   background-color: transparent;
@@ -106,16 +86,29 @@ const StyledButton = styled.button`
 `;
 
 const TopbarImg = styled.img`
-width: 32px;
-height: 32px;
-border-radius: 50%;
-object-fit: cover;
-cursor: pointer;
-margin-left: 5px; /* Decreased margin-left to move elements to the left */
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  cursor: pointer;
+  margin-left: 5px;
 `;
+
+const UserInfo = styled.div`
+  display: flex;
+  align-items: center;
+  margin-right: 10px;
+`;
+
+const UserName = styled.span`
+  margin-right: 10px;
+  font-size: 14px;
+`;
+
 export default function Topbar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { currentUser } = useAuth();
 
   const handleNavigation = () => {
     if (location.pathname === '/Home') {
@@ -142,16 +135,19 @@ export default function Topbar() {
       </TopbarCenter>
       <TopbarRight>
         <StyledButton onClick={handleNavigation}>
-        {/*'' empty path to dont show profile */}
           {location.pathname === '/Home' ? '' : 'Home'}
         </StyledButton>
         <TopbarIcons>
           <TopbarIconItem onClick={handleChatClick}>
             <Chat />
-            {/* <TopbarIconBadge>1</TopbarIconBadge> */}
           </TopbarIconItem>
         </TopbarIcons>
-        <TopbarImg src="/assets/person/1.jpeg" alt="" />
+        {currentUser && (
+          <UserInfo>
+            <UserName>{currentUser.displayName}</UserName>
+            <TopbarImg src={currentUser.photoURL} alt={currentUser.displayName} />
+          </UserInfo>
+        )}
       </TopbarRight>
     </TopbarContainer>
   );

@@ -6,7 +6,7 @@ import { IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button, 
 // import ReadMoreIcon from '@mui/icons-material/ReadMore';
 import AlertDialogSlide from '../alertDialogSlide/AlertDialogSlide';
 import ReactionDialog from '../reactionDialog/ReactionDialog';
-
+import { useAuth } from '../../../firestore/AuthContext';
 
 // Define styled components
 const PostContainer = styled.div`
@@ -116,6 +116,7 @@ const StyledDialog = styled(Dialog)`
 
 // export default 
 function Post({ post, toggleFavorite }) {
+  const { currentUser } = useAuth();  // Add this line
   const [dialogOpen, setDialogOpen] = useState(false);
   const [reactionDialogOpen, setReactionDialogOpen] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -190,11 +191,11 @@ function Post({ post, toggleFavorite }) {
         <PostTop>
           <PostTopLeft>
             <PostProfileImg
-              src={Users.filter((u) => u.id === post?.userId)[0].profilePicture}
+              src={post.userId === currentUser.uid ? currentUser.photoURL : post.userPhotoURL}
               alt=""
             />
             <PostUsername>
-              {Users.filter((u) => u.id === post?.userId)[0].username}
+              {post.userId === currentUser.uid ? currentUser.displayName : post.username}
             </PostUsername>
             <PostDate>{post.date}</PostDate>
           </PostTopLeft>
