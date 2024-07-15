@@ -3,28 +3,51 @@
 import{ auth, db, storage } from '../firebase-config';
 import { getDoc, doc, setDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';  // Add this line
-
-
 export const getOrCreateUser = async (uid) => {
-    const userRef = doc(db, "users", uid);
-    const userSnap = await getDoc(userRef);
-    
-    if (userSnap.exists()) {
-        return { id: userSnap.id, ...userSnap.data() };
-    } else {
-        try {
-            const googlePhotoUrl = auth.currentUser.photoURL;
+    try {
+        const userRef = doc(db, "users", uid);
+        const userSnap = await getDoc(userRef);
+        
+        if (userSnap.exists()) {
+            console.log("User already exists, returning user data");
+            return { id: userSnap.id, ...userSnap.data() };
+        } else {
+            console.log("User doesn't exist, creating new user");
+            const currentUser = auth.currentUser;
+            if (!currentUser) {
+                throw new Error("No authenticated user found");
+            }
 
-            // Download the photo and upload to Firebase Storage
-            const response = await fetch(googlePhotoUrl);
-            const blob = await response.blob();
-            const storageRef = ref(storage, `userPhotos/${auth.currentUser.uid}/profile.jpg`);
-            await uploadBytes(storageRef, blob);
-            const photoURL = await getDownloadURL(storageRef);
+            let photoURL = currentUser.photoURL;
+
+            // If there's a Google photo URL, download and upload to Firebase Storage
+            if (photoURL && photoURL.includes('googleusercontent.com')) {
+                try {
+                    console.log("Downloading and uploading Google profile picture");
+                    // Use a CORS proxy to fetch the image
+                    const corsProxyUrl = 'https://cors-anywhere.herokuapp.com/';
+                    const response = await fetch(corsProxyUrl + photoURL, {
+                        headers: {
+                            'Origin': window.location.origin
+                        }
+                    });
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const blob = await response.blob();
+                    const storageRef = ref(storage, `userPhotos/${uid}/profile.jpg`);
+                    await uploadBytes(storageRef, blob);
+                    photoURL = await getDownloadURL(storageRef);
+                } catch (error) {
+                    console.error("Error processing profile picture:", error);
+                    // If there's an error with the photo, we'll use a default avatar URL
+                    photoURL = 'https://example.com/default-avatar.png'; // Replace with your default avatar URL
+                }
+            }
 
             const newUser = {
-                displayName: auth.currentUser?.displayName || "",
-                email: auth.currentUser?.email || "",
+                displayName: currentUser.displayName || "",
+                email: currentUser.email || "",
                 photoURL: photoURL || "",
                 bio: "",
                 posts: [],
@@ -35,12 +58,14 @@ export const getOrCreateUser = async (uid) => {
                 recorder: "",
                 experience: ""
             };
+
+            console.log("Setting new user document in Firestore");
             await setDoc(userRef, newUser);
             return { id: uid, ...newUser };
-        } catch (error) {
-            console.error("Error creating user document:", error);
-            throw new Error(error.message);
         }
+    } catch (error) {
+        console.error("Error in getOrCreateUser:", error);
+        throw error;
     }
 };
 

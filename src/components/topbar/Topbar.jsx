@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { Search, Chat } from '@mui/icons-material';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -85,14 +85,14 @@ const StyledButton = styled.button`
   margin-right: 10px;
 `;
 
-const TopbarImg = styled.img`
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
-  cursor: pointer;
-  margin-left: 5px;
-`;
+// const TopbarImg = styled.img`
+//   width: 32px;
+//   height: 32px;
+//   border-radius: 50%;
+//   object-fit: cover;
+//   cursor: pointer;
+//   margin-left: 5px;
+// `;
 
 const UserInfo = styled.div`
   display: flex;
@@ -105,10 +105,20 @@ const UserName = styled.span`
   font-size: 14px;
 `;
 
+const TopbarImg = styled.img`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  cursor: pointer;
+  margin-left: 5px;
+`;
+
 export default function Topbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { currentUser } = useAuth();
+  const [imgError, setImgError] = useState(false);
 
   const handleNavigation = () => {
     if (location.pathname === '/Home') {
@@ -120,6 +130,10 @@ export default function Topbar() {
 
   const handleChatClick = () => {
     navigate('/Inbox');
+  };
+
+  const handleImageError = () => {
+    setImgError(true);
   };
 
   return (
@@ -143,10 +157,11 @@ export default function Topbar() {
           </TopbarIconItem>
         </TopbarIcons>
         {currentUser && (
-          <UserInfo>
-            <UserName>{currentUser.displayName}</UserName>
-            <TopbarImg src={currentUser.photoURL} alt={currentUser.displayName} />
-          </UserInfo>
+          <TopbarImg 
+            src={imgError ? 'https://example.com/default-avatar.png' : currentUser.photoURL} 
+            alt={currentUser.displayName}
+            onError={handleImageError}
+          />
         )}
       </TopbarRight>
     </TopbarContainer>

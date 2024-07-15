@@ -1,9 +1,17 @@
+// import React, { useState, useRef } from 'react';
+// import styled from 'styled-components';
+// import { Star, StarBorder, ChatBubbleOutline, PlayArrow, Pause, PictureAsPdf } from '@mui/icons-material';
+// import { Users } from '../../../dummyData';
+// import { IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button, Slider } from '@mui/material';
+// import AlertDialogSlide from '../alertDialogSlide/AlertDialogSlide';
+// import ReactionDialog from '../reactionDialog/ReactionDialog';
+// import { useAuth } from '../../../firestore/AuthContext';
+
+// Updated Post_l.jsx
 import React, { useState, useRef } from 'react';
 import styled from 'styled-components';
 import { Star, StarBorder, ChatBubbleOutline, PlayArrow, Pause, PictureAsPdf } from '@mui/icons-material';
-import { Users } from '../../../dummyData';
 import { IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button, Slider } from '@mui/material';
-// import ReadMoreIcon from '@mui/icons-material/ReadMore';
 import AlertDialogSlide from '../alertDialogSlide/AlertDialogSlide';
 import ReactionDialog from '../reactionDialog/ReactionDialog';
 import { useAuth } from '../../../firestore/AuthContext';
@@ -32,12 +40,12 @@ const PostTopLeft = styled.div`
   align-items: center;
 `;
 
-const PostProfileImg = styled.img`
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
-`;
+// const PostProfileImg = styled.img`
+//   width: 32px;
+//   height: 32px;
+//   border-radius: 50%;
+//   object-fit: cover;
+// `;
 
 const PostUsername = styled.span`
   font-size: 15px;
@@ -113,43 +121,25 @@ const StyledDialog = styled(Dialog)`
     padding: 16px;
   }
 `;
+const PostProfileImg = styled.img`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+`;
 
-// export default 
 function Post({ post, toggleFavorite }) {
-  const { currentUser } = useAuth();  // Add this line
+  const { currentUser } = useAuth();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [reactionDialogOpen, setReactionDialogOpen] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const audioRef = useRef(null);
 
-  const handleDialogOpen = () => {
-    setDialogOpen(true);
-  };
-
-  const handleDialogClose = () => {
-    setDialogOpen(false);
-  };
-
-  const handleReactionDialogOpen = () => {
-    setReactionDialogOpen(true);
-  };
-
-  const handleReactionDialogClose = () => {
-    setReactionDialogOpen(false);
-  };
-
-  const handleFavoriteToggle = () => {
-    toggleFavorite(post.id);
-  };
-
-  const handleSendReaction = (reaction) => {
-    console.log('Reaction sent:', reaction);
-  };
-
-  const togglePlayPause = () => {
+  const handlePlayPause = () => {
     if (isPlaying) {
       audioRef.current.pause();
     } else {
@@ -166,7 +156,7 @@ function Post({ post, toggleFavorite }) {
     setDuration(audioRef.current.duration);
   };
 
-  const handleSliderChange = (event, newValue) => {
+  const handleSliderChange = (_, newValue) => {
     audioRef.current.currentTime = newValue;
     setCurrentTime(newValue);
   };
@@ -177,13 +167,11 @@ function Post({ post, toggleFavorite }) {
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
 
-  const handlePdfOpen = () => {
-    setPdfDialogOpen(true);
+  const handleImageError = () => {
+    setImgError(true);
   };
 
-  const handlePdfClose = () => {
-    setPdfDialogOpen(false);
-  };
+  const isCurrentUserPost = post.userId === currentUser?.uid;
 
   return (
     <PostContainer>
@@ -191,29 +179,29 @@ function Post({ post, toggleFavorite }) {
         <PostTop>
           <PostTopLeft>
             <PostProfileImg
-              src={post.userId === currentUser.uid ? currentUser.photoURL : post.userPhotoURL}
-              alt=""
+              src={imgError ? 'https://example.com/default-avatar.png' : 
+                   (isCurrentUserPost ? currentUser.photoURL : post.userPhotoURL)}
+              alt={isCurrentUserPost ? currentUser.displayName : post.username}
+              onError={handleImageError}
             />
-            <PostUsername>
-              {post.userId === currentUser.uid ? currentUser.displayName : post.username}
-            </PostUsername>
+            <PostUsername>{isCurrentUserPost ? currentUser.displayName : post.username}</PostUsername>
             <PostDate>{post.date}</PostDate>
           </PostTopLeft>
           <PostTopRight>
-            <IconButton onClick={handleFavoriteToggle}>
+            <IconButton onClick={() => toggleFavorite(post.id)}>
               {post.isFavorite ? <Star htmlColor="#6d4c41" /> : <StarBorder htmlColor="#6d4c41" />}
             </IconButton>
-            <IconButton onClick={handleReactionDialogOpen}>
+            <IconButton onClick={() => setReactionDialogOpen(true)}>
               <ChatBubbleOutline htmlColor="#6d4c41" />
             </IconButton>
           </PostTopRight>
         </PostTop>
         <PostCenter>
-          <PostText>{post?.desc}</PostText>
+          <PostText>{post.desc}</PostText>
           {post.pdf && (
-            <FileButton onClick={handlePdfOpen} startIcon={<PictureAsPdf />} sx={{ color: '#6d4c41' }}>
-              View Lyrics (PDF)
-            </FileButton>
+            <Button onClick={() => setPdfDialogOpen(true)} startIcon={<PictureAsPdf />}>
+              View PDF
+            </Button>
           )}
           {post.audio && (
             <AudioPlayerContainer>
@@ -223,35 +211,33 @@ function Post({ post, toggleFavorite }) {
                 onTimeUpdate={handleTimeUpdate}
                 onLoadedMetadata={handleLoadedMetadata}
               />
-              <IconButton onClick={togglePlayPause}>
+              <IconButton onClick={handlePlayPause}>
                 {isPlaying ? <Pause htmlColor="#6d4c41" /> : <PlayArrow htmlColor="#6d4c41" />}
               </IconButton>
-              <StyledSlider
+              <Slider
                 value={currentTime}
                 max={duration}
                 onChange={handleSliderChange}
                 aria-labelledby="continuous-slider"
-                sx={{ width: '60%', mx: 2 }}
               />
               <span>{formatTime(currentTime)} / {formatTime(duration)}</span>
             </AudioPlayerContainer>
           )}
         </PostCenter>
       </PostWrapper>
-      <AlertDialogSlide open={dialogOpen} handleClose={handleDialogClose} />
+      <AlertDialogSlide open={dialogOpen} handleClose={() => setDialogOpen(false)} />
       <ReactionDialog
         open={reactionDialogOpen}
-        onClose={handleReactionDialogClose}
-        onSend={handleSendReaction}
+        onClose={() => setReactionDialogOpen(false)}
+        onSend={(reaction) => console.log('Reaction sent:', reaction)}
       />
-      <StyledDialog
+      <Dialog
         open={pdfDialogOpen}
-        onClose={handlePdfClose}
+        onClose={() => setPdfDialogOpen(false)}
         maxWidth="md"
         fullWidth
-        aria-labelledby="pdf-dialog-title"
       >
-        <DialogTitle id="pdf-dialog-title">PDF Viewer</DialogTitle>
+        <DialogTitle>PDF Viewer</DialogTitle>
         <DialogContent>
           {post.pdf && (
             <iframe 
@@ -264,14 +250,13 @@ function Post({ post, toggleFavorite }) {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handlePdfClose} style={{ backgroundColor: '#6d4c41', color: 'white' }}>
+          <Button onClick={() => setPdfDialogOpen(false)} color="primary">
             Close
           </Button>
         </DialogActions>
-      </StyledDialog>
+      </Dialog>
     </PostContainer>
   );
 }
 
-// At the end of Post_l.jsx
 export default Post;

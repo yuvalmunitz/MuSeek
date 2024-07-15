@@ -81,7 +81,6 @@ const OutlinedStyledButton = styled(Button)(({ theme }) => ({
   },
   margin: theme.spacing(1),
 }));
-
 const OnBoarding = () => {
   const [answers, setAnswers] = useState({
     genres: [],
@@ -97,24 +96,30 @@ const OnBoarding = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    const fetchUser = async (authUser) => {
+      try {
+        const userDetails = await getOrCreateUser(authUser.uid);
+        setUser(userDetails);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching or creating user:", error);
+        setError("Failed to fetch or create user. Please try again.");
+        setLoading(false);
+      }
+    };
+
     const unsubscribe = auth.onAuthStateChanged(async (authUser) => {
       if (authUser) {
-        try {
-          const userDetails = await getOrCreateUser(authUser.uid);
-          setUser(userDetails);
-        } catch (error) {
-          console.error("Error fetching or creating user:", error);
-          setError("Failed to fetch or create user. Please try again.");
-        }
+        fetchUser(authUser);
       } else {
         console.log("No authenticated user found");
         navigate('/register');
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();
   }, [navigate]);
+
 
   const handleToggle = (field, option) => {
     setAnswers((prev) => {
@@ -169,7 +174,6 @@ const OnBoarding = () => {
     setOpenCopyrightDialog(false);
     // Optionally, you can show a message or take other actions if the user disagrees
   };
-
   if (loading) {
     return (
       <Container>
@@ -184,8 +188,15 @@ const OnBoarding = () => {
   if (error) {
     return (
       <Container>
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
-          <Typography color="error">{error}</Typography>
+        <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" minHeight="100vh">
+          <Typography color="error" gutterBottom>{error}</Typography>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            onClick={() => window.location.reload()}
+          >
+            Retry
+          </Button>
         </Box>
       </Container>
     );
