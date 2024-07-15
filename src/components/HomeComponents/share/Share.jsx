@@ -1,3 +1,13 @@
+// import React, { useState, useRef } from 'react';
+// import styled from 'styled-components';
+// import MusicNoteIcon from '@mui/icons-material/MusicNote';
+// import NotesIcon from '@mui/icons-material/Notes';
+// import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+// import PauseIcon from '@mui/icons-material/Pause';
+// import CloseIcon from '@mui/icons-material/Close';
+// import { Button, Slider, Typography, Dialog, DialogTitle, DialogContent, DialogActions, IconButton } from '@mui/material';
+// import { useAuth } from '../../../firestore/AuthContext';
+
 import React, { useState, useRef } from 'react';
 import styled from 'styled-components';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
@@ -7,6 +17,10 @@ import PauseIcon from '@mui/icons-material/Pause';
 import CloseIcon from '@mui/icons-material/Close';
 import { Button, Slider, Typography, Dialog, DialogTitle, DialogContent, DialogActions, IconButton } from '@mui/material';
 import { useAuth } from '../../../firestore/AuthContext';
+import { addPostToUser } from '../../../firestore/users';
+import { addDoc, collection } from 'firebase/firestore';
+import { db } from '../../../firebase-config';
+
 
 const ShareWrapper = styled.div`
   padding: 10px;
@@ -140,8 +154,8 @@ const CloseButton = styled(IconButton)`
   color: white;
 `;
 
-export default function Share({ addNewPost }) {
-  const { currentUser } = useAuth();  // Add this line
+export default function Share({ onPostAdded }) {
+  const { currentUser } = useAuth();
   const [description, setDescription] = useState('');
   const [audioFile, setAudioFile] = useState(null);
   const [pdfFile, setPdfFile] = useState(null);
@@ -151,25 +165,46 @@ export default function Share({ addNewPost }) {
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
   const audioRef = useRef(null);
 
-  const handleShare = () => {
-    const newPost = {
-      id: Date.now(),
-      desc: description,
-      audio: audioFile,
-      pdf: pdfFile,
-      date: new Date().toISOString(),
-      userId: currentUser.uid,  // Use the current user's ID
-      like: 0,
-      comment: 0,
-    };
-    addNewPost(newPost);
-    setDescription('');
-    setAudioFile(null);
-    setPdfFile(null);
-    setIsPlaying(false);
-    setCurrentTime(0);
-    setDuration(0);
+  const handleShare = async () => {
+    try {
+      const newPost = {
+        desc: description,
+        audio: audioFile,
+        pdf: pdfFile,
+        date: new Date().toISOString(),
+        userId: currentUser.uid,
+        username: currentUser.displayName,
+        userPhotoURL: currentUser.photoURL,
+        likes: 0,
+        comments: 0,
+      };
+
+      // Add the post to Firestore
+      const postRef = await addDoc(collection(db, "posts"), newPost);
+      const postId = postRef.id;
+
+      // Add the post ID to the user's posts array
+      await addPostToUser(currentUser.uid, postId);
+
+      // Clear the form
+      setDescription('');
+      setAudioFile(null);
+      setPdfFile(null);
+      setIsPlaying(false);
+      setCurrentTime(0);
+      setDuration(0);
+
+      // Notify parent component that a new post was added
+      if (onPostAdded) {
+        onPostAdded();
+      }
+
+      console.log('Post shared successfully');
+    } catch (error) {
+      console.error('Error sharing post:', error);
+    }
   };
+
 
   const handleAudioUpload = (event) => {
     const file = event.target.files[0];

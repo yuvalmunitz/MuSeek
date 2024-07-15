@@ -200,3 +200,16 @@ export const getUser = async (uid) => {
         throw new Error(e.message);
     }
 };
+
+export const addPostToUser = async (uid, postId) => {
+    try {
+        const userRef = doc(db, "users", uid);
+        await updateDoc(userRef, {
+            posts: arrayUnion(postId)
+        });
+        console.log(`Added post ${postId} to user ${uid}`);
+    } catch (e) {
+        console.error("Error adding post to user: ", e);
+        throw new Error(e.message);
+    }
+};
