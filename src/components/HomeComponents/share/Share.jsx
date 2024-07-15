@@ -1,14 +1,4 @@
-// import React, { useState, useRef } from 'react';
-// import styled from 'styled-components';
-// import MusicNoteIcon from '@mui/icons-material/MusicNote';
-// import NotesIcon from '@mui/icons-material/Notes';
-// import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-// import PauseIcon from '@mui/icons-material/Pause';
-// import CloseIcon from '@mui/icons-material/Close';
-// import { Button, Slider, Typography, Dialog, DialogTitle, DialogContent, DialogActions, IconButton } from '@mui/material';
-// import { useAuth } from '../../../firestore/AuthContext';
-
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import NotesIcon from '@mui/icons-material/Notes';
@@ -18,8 +8,8 @@ import CloseIcon from '@mui/icons-material/Close';
 import { Button, Slider, Typography, Dialog, DialogTitle, DialogContent, DialogActions, IconButton } from '@mui/material';
 import { useAuth } from '../../../firestore/AuthContext';
 import { addPostToUser } from '../../../firestore/users';
-import { addDoc, collection } from 'firebase/firestore';
-import { db } from '../../../firebase-config';
+import { serverTimestamp } from 'firebase/firestore';
+
 
 
 const ShareWrapper = styled.div`
@@ -158,45 +148,66 @@ export default function Share({ onPostAdded }) {
   const { currentUser } = useAuth();
   const [description, setDescription] = useState('');
   const [audioFile, setAudioFile] = useState(null);
+  const [audioUrl, setAudioUrl] = useState(null);
   const [pdfFile, setPdfFile] = useState(null);
+  const [pdfUrl, setPdfUrl] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
-  const audioRef = useRef(null);
+
+  useEffect(() => {
+    let audio;
+    if (audioUrl) {
+      audio = new Audio(audioUrl);
+      audio.addEventListener('timeupdate', handleTimeUpdate);
+      audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+    }
+    return () => {
+      if (audio) {
+        audio.removeEventListener('timeupdate', handleTimeUpdate);
+        audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      }
+    };
+  }, [audioUrl]);
 
   const handleShare = async () => {
     try {
       const newPost = {
         desc: description,
-        audio: audioFile,
-        pdf: pdfFile,
-        date: new Date().toISOString(),
-        userId: currentUser.uid,
+        audio: audioFile, // Keep this as File for upload
+        pdf: pdfFile, // Keep this as File for upload
         username: currentUser.displayName,
         userPhotoURL: currentUser.photoURL,
         likes: 0,
         comments: 0,
+        date: serverTimestamp()
       };
 
-      // Add the post to Firestore
-      const postRef = await addDoc(collection(db, "posts"), newPost);
-      const postId = postRef.id;
-
-      // Add the post ID to the user's posts array
-      await addPostToUser(currentUser.uid, postId);
+      // Add the post to Firestore and user's posts array
+      const postId = await addPostToUser(currentUser.uid, newPost);
 
       // Clear the form
       setDescription('');
       setAudioFile(null);
+      setAudioUrl(null);
       setPdfFile(null);
-      setIsPlaying(false);
-      setCurrentTime(0);
-      setDuration(0);
+      setPdfUrl(null);
+      // ... (reset other state variables)
 
       // Notify parent component that a new post was added
       if (onPostAdded) {
-        onPostAdded();
+        onPostAdded({
+          id: postId,
+          desc: description,
+          audio: audioUrl, // Use URL for rendering
+          pdf: pdfUrl, // Use URL for rendering
+          username: currentUser.displayName,
+          userPhotoURL: currentUser.photoURL,
+          likes: 0,
+          comments: 0,
+          date: new Date().toLocaleString()
+        });
       }
 
       console.log('Post shared successfully');
@@ -209,48 +220,46 @@ export default function Share({ onPostAdded }) {
   const handleAudioUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
-      // Check for common audio MIME types and file extensions
-      const validAudioTypes = ['audio/mpeg', 'audio/mp3', 'audio/x-m4a', 'audio/x-wav', 'audio/x-aac'];
-      const fileExtension = file.name.split('.').pop().toLowerCase();
-      
-      if (validAudioTypes.includes(file.type) || fileExtension === 'mp3') {
-        const url = URL.createObjectURL(file);
-        setAudioFile(url);
-      } else {
-        alert("Please upload a valid audio file (MP3, M4A, WAV, AAC).");
-      }
+      setAudioFile(file);
+      const url = URL.createObjectURL(file);
+      setAudioUrl(url);
     }
   };
+
   const handlePdfUpload = (event) => {
     const file = event.target.files[0];
     if (file && file.type === "application/pdf") {
+      setPdfFile(file);
       const url = URL.createObjectURL(file);
-      setPdfFile(url);
+      setPdfUrl(url);
       setPdfDialogOpen(true);
     } else {
       alert("Please upload a valid PDF file.");
     }
   };
 
-  const togglePlayPause = () => {
+  const handlePlayPause = () => {
+    const audio = new Audio(audioUrl);
     if (isPlaying) {
-      audioRef.current.pause();
+      audio.pause();
     } else {
-      audioRef.current.play();
+      audio.currentTime = currentTime;
+      audio.play();
     }
     setIsPlaying(!isPlaying);
   };
 
-  const handleTimeUpdate = () => {
-    setCurrentTime(audioRef.current.currentTime);
+  const handleTimeUpdate = (e) => {
+    setCurrentTime(e.target.currentTime);
   };
 
-  const handleLoadedMetadata = () => {
-    setDuration(audioRef.current.duration);
+  const handleLoadedMetadata = (e) => {
+    setDuration(e.target.duration);
   };
 
-  const handleSliderChange = (event, newValue) => {
-    audioRef.current.currentTime = newValue;
+  const handleSliderChange = (_, newValue) => {
+    const audio = new Audio(audioUrl);
+    audio.currentTime = newValue;
     setCurrentTime(newValue);
   };
 
@@ -299,7 +308,7 @@ export default function Share({ onPostAdded }) {
             </ShareOption>
             <ShareOption>
               <input
-                accept="audio/mp3"
+                accept="audio/*"
                 style={{ display: 'none' }}
                 id="audio-upload"
                 type="file"
@@ -312,22 +321,16 @@ export default function Share({ onPostAdded }) {
                   startIcon={<MusicNoteIcon />}
                   style={{ backgroundColor: '#6d4c41', color: 'white' }}
                 >
-                  Upload MP3
+                  Upload Audio
                 </Button>
               </label>
             </ShareOption>
           </ShareOptions>
           <ShareButton onClick={handleShare}>Share</ShareButton>
         </ShareBottom>
-        {audioFile && (
+        {audioUrl && (
           <AudioPlayerContainer>
-            <audio
-              ref={audioRef}
-              src={audioFile}
-              onTimeUpdate={handleTimeUpdate}
-              onLoadedMetadata={handleLoadedMetadata}
-            />
-            <StyledButton onClick={togglePlayPause} variant="contained">
+            <StyledButton onClick={handlePlayPause} variant="contained">
               {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
             </StyledButton>
             <StyledSlider

@@ -1,8 +1,13 @@
 // import { auth, db, storage } from '../firebase-config';
 // import { getDoc, doc, setDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+
+
 import{ auth, db, storage } from '../firebase-config';
-import { getDoc, doc, setDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';  // Add this line
+import { getDoc, doc, setDoc, updateDoc, arrayUnion, arrayRemove, addDoc, collection } from 'firebase/firestore';
+import { uploadFile } from '../storage';
+
+
 export const getOrCreateUser = async (uid) => {
     try {
         const userRef = doc(db, "users", uid);
@@ -201,13 +206,58 @@ export const getUser = async (uid) => {
     }
 };
 
-export const addPostToUser = async (uid, postId) => {
+// export const addPostToUser = async (uid, postId) => {
+//     try {
+//         const userRef = doc(db, "users", uid);
+//         await updateDoc(userRef, {
+//             posts: arrayUnion(postId)
+//         });
+//         console.log(`Added post ${postId} to user ${uid}`);
+//     } catch (e) {
+//         console.error("Error adding post to user: ", e);
+//         throw new Error(e.message);
+//     }
+// };
+export const addPostToUser = async (uid, postData) => {
     try {
         const userRef = doc(db, "users", uid);
+        let audioURL = null;
+        let pdfURL = null;
+
+        // Upload audio file if present
+        if (postData.audio) {
+            const audioPath = `posts/${uid}/audio_${Date.now()}.mp3`;
+            audioURL = await uploadFile(postData.audio, audioPath);
+            console.log("Uploaded audio URL:", audioURL);
+        }
+
+        // Upload PDF file if present
+        if (postData.pdf) {
+            const pdfPath = `posts/${uid}/pdf_${Date.now()}.pdf`;
+            pdfURL = await uploadFile(postData.pdf, pdfPath);
+            console.log("Uploaded PDF URL:", pdfURL);
+        }
+
+        // Create post object with file URLs
+        const newPost = {
+            ...postData,
+            audio: audioURL,
+            pdf: pdfURL,
+            createdAt: new Date().toISOString(),
+            userId: uid
+        };
+
+        // Add post to Firestore
+        const postRef = await addDoc(collection(db, "posts"), newPost);
+        const postId = postRef.id;
+
+        // Add post ID to user's posts array
         await updateDoc(userRef, {
             posts: arrayUnion(postId)
         });
+
         console.log(`Added post ${postId} to user ${uid}`);
+        return postId;
     } catch (e) {
         console.error("Error adding post to user: ", e);
         throw new Error(e.message);

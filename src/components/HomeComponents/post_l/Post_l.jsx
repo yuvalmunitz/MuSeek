@@ -1,14 +1,6 @@
-// import React, { useState, useRef } from 'react';
-// import styled from 'styled-components';
-// import { Star, StarBorder, ChatBubbleOutline, PlayArrow, Pause, PictureAsPdf } from '@mui/icons-material';
-// import { Users } from '../../../dummyData';
-// import { IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button, Slider } from '@mui/material';
-// import AlertDialogSlide from '../alertDialogSlide/AlertDialogSlide';
-// import ReactionDialog from '../reactionDialog/ReactionDialog';
-// import { useAuth } from '../../../firestore/AuthContext';
 
 // Updated Post_l.jsx
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { Star, StarBorder, ChatBubbleOutline, PlayArrow, Pause, PictureAsPdf } from '@mui/icons-material';
 import { IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button, Slider } from '@mui/material';
@@ -128,6 +120,10 @@ const PostProfileImg = styled.img`
   object-fit: cover;
 `;
 
+const AudioPlayer = styled.audio`
+  display: none;
+`;
+
 function Post({ post, toggleFavorite }) {
   const { currentUser } = useAuth();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -139,26 +135,57 @@ function Post({ post, toggleFavorite }) {
   const [imgError, setImgError] = useState(false);
   const audioRef = useRef(null);
 
-  const handlePlayPause = () => {
-    if (isPlaying) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.play();
+  useEffect(() => {
+    console.log("Post audio URL:", post.audio);
+    console.log("Post PDF URL:", post.pdf);
+
+    if (audioRef.current) {
+      audioRef.current.addEventListener('timeupdate', handleTimeUpdate);
+      audioRef.current.addEventListener('loadedmetadata', handleLoadedMetadata);
+      audioRef.current.addEventListener('ended', handleEnded);
     }
-    setIsPlaying(!isPlaying);
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.removeEventListener('timeupdate', handleTimeUpdate);
+        audioRef.current.removeEventListener('loadedmetadata', handleLoadedMetadata);
+        audioRef.current.removeEventListener('ended', handleEnded);
+      }
+    };
+  }, [post]);
+
+  const handlePlayPause = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play().catch(e => console.error("Error playing audio:", e));
+      }
+      setIsPlaying(!isPlaying);
+    }
   };
 
   const handleTimeUpdate = () => {
-    setCurrentTime(audioRef.current.currentTime);
+    if (audioRef.current) {
+      setCurrentTime(audioRef.current.currentTime);
+    }
   };
 
   const handleLoadedMetadata = () => {
-    setDuration(audioRef.current.duration);
+    if (audioRef.current) {
+      setDuration(audioRef.current.duration);
+    }
+  };
+
+  const handleEnded = () => {
+    setIsPlaying(false);
+    setCurrentTime(0);
   };
 
   const handleSliderChange = (_, newValue) => {
-    audioRef.current.currentTime = newValue;
-    setCurrentTime(newValue);
+    if (audioRef.current) {
+      audioRef.current.currentTime = newValue;
+      setCurrentTime(newValue);
+    }
   };
 
   const formatTime = (time) => {
@@ -197,33 +224,28 @@ function Post({ post, toggleFavorite }) {
           </PostTopRight>
         </PostTop>
         <PostCenter>
-          <PostText>{post.desc}</PostText>
-          {post.pdf && (
-            <Button onClick={() => setPdfDialogOpen(true)} startIcon={<PictureAsPdf />}>
-              View PDF
-            </Button>
-          )}
-          {post.audio && (
-            <AudioPlayerContainer>
-              <audio
-                ref={audioRef}
-                src={post.audio}
-                onTimeUpdate={handleTimeUpdate}
-                onLoadedMetadata={handleLoadedMetadata}
-              />
-              <IconButton onClick={handlePlayPause}>
-                {isPlaying ? <Pause htmlColor="#6d4c41" /> : <PlayArrow htmlColor="#6d4c41" />}
-              </IconButton>
-              <Slider
-                value={currentTime}
-                max={duration}
-                onChange={handleSliderChange}
-                aria-labelledby="continuous-slider"
-              />
-              <span>{formatTime(currentTime)} / {formatTime(duration)}</span>
-            </AudioPlayerContainer>
-          )}
-        </PostCenter>
+        <PostText>{post.desc}</PostText>
+        {post.pdf && (
+          <Button onClick={() => setPdfDialogOpen(true)} startIcon={<PictureAsPdf />}>
+            View PDF
+          </Button>
+        )}
+        {post.audio && (
+          <AudioPlayerContainer>
+            <audio ref={audioRef} src={post.audio} />
+            <IconButton onClick={handlePlayPause}>
+              {isPlaying ? <Pause htmlColor="#6d4c41" /> : <PlayArrow htmlColor="#6d4c41" />}
+            </IconButton>
+            <Slider
+              value={currentTime}
+              max={duration}
+              onChange={handleSliderChange}
+              aria-labelledby="continuous-slider"
+            />
+            <span>{formatTime(currentTime)} / {formatTime(duration)}</span>
+          </AudioPlayerContainer>
+        )}
+      </PostCenter>
       </PostWrapper>
       <AlertDialogSlide open={dialogOpen} handleClose={() => setDialogOpen(false)} />
       <ReactionDialog
@@ -241,7 +263,7 @@ function Post({ post, toggleFavorite }) {
         <DialogContent>
           {post.pdf && (
             <iframe 
-              src={post.pdf} 
+              src={post.pdf}
               width="100%" 
               height="600px" 
               style={{ border: 'none' }}
@@ -260,3 +282,4 @@ function Post({ post, toggleFavorite }) {
 }
 
 export default Post;
+
