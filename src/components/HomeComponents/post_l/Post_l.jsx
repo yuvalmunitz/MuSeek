@@ -1,5 +1,3 @@
-
-// Updated Post_l.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { Star, StarBorder, ChatBubbleOutline, PlayArrow, Pause, PictureAsPdf } from '@mui/icons-material';
@@ -31,13 +29,6 @@ const PostTopLeft = styled.div`
   display: flex;
   align-items: center;
 `;
-
-// const PostProfileImg = styled.img`
-//   width: 32px;
-//   height: 32px;
-//   border-radius: 50%;
-//   object-fit: cover;
-// `;
 
 const PostUsername = styled.span`
   font-size: 15px;
@@ -124,7 +115,7 @@ const AudioPlayer = styled.audio`
   display: none;
 `;
 
-function Post({ post, toggleFavorite }) {
+function Post({ post, onFavoriteToggle, isFavorite }) {
   const { currentUser } = useAuth();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [reactionDialogOpen, setReactionDialogOpen] = useState(false);
@@ -136,9 +127,6 @@ function Post({ post, toggleFavorite }) {
   const audioRef = useRef(null);
 
   useEffect(() => {
-    console.log("Post audio URL:", post.audio);
-    console.log("Post PDF URL:", post.pdf);
-
     if (audioRef.current) {
       audioRef.current.addEventListener('timeupdate', handleTimeUpdate);
       audioRef.current.addEventListener('loadedmetadata', handleLoadedMetadata);
@@ -151,7 +139,12 @@ function Post({ post, toggleFavorite }) {
         audioRef.current.removeEventListener('ended', handleEnded);
       }
     };
-  }, [post]);
+  }, []);
+
+  const handleFavoriteToggle = () => {
+    onFavoriteToggle(post.id, !isFavorite);
+  };
+
 
   const handlePlayPause = () => {
     if (audioRef.current) {
@@ -198,7 +191,15 @@ function Post({ post, toggleFavorite }) {
     setImgError(true);
   };
 
-  const isCurrentUserPost = post.userId === currentUser?.uid;
+  const formatDate = (date) => {
+    if (date instanceof Date) {
+      return date.toLocaleString();
+    } else if (typeof date === 'string') {
+      return new Date(date).toLocaleString();
+    }
+    return 'Unknown date';
+  };
+
 
   return (
     <PostContainer>
@@ -206,17 +207,16 @@ function Post({ post, toggleFavorite }) {
         <PostTop>
           <PostTopLeft>
             <PostProfileImg
-              src={imgError ? 'https://example.com/default-avatar.png' : 
-                   (isCurrentUserPost ? currentUser.photoURL : post.userPhotoURL)}
-              alt={isCurrentUserPost ? currentUser.displayName : post.username}
-              onError={handleImageError}
+              src={post.userPhotoURL || 'https://example.com/default-avatar.png'}
+              alt={post.username}
+              onError={() => setImgError(true)}
             />
-            <PostUsername>{isCurrentUserPost ? currentUser.displayName : post.username}</PostUsername>
-            <PostDate>{post.date}</PostDate>
+            <PostUsername>{post.username}</PostUsername>
+            <PostDate>{formatDate(post.date)}</PostDate>
           </PostTopLeft>
           <PostTopRight>
-            <IconButton onClick={() => toggleFavorite(post.id)}>
-              {post.isFavorite ? <Star htmlColor="#6d4c41" /> : <StarBorder htmlColor="#6d4c41" />}
+            <IconButton onClick={handleFavoriteToggle}>
+              {isFavorite ? <Star htmlColor="#6d4c41" /> : <StarBorder htmlColor="#6d4c41" />}
             </IconButton>
             <IconButton onClick={() => setReactionDialogOpen(true)}>
               <ChatBubbleOutline htmlColor="#6d4c41" />
@@ -224,28 +224,28 @@ function Post({ post, toggleFavorite }) {
           </PostTopRight>
         </PostTop>
         <PostCenter>
-        <PostText>{post.desc}</PostText>
-        {post.pdf && (
-          <Button onClick={() => setPdfDialogOpen(true)} startIcon={<PictureAsPdf />}>
-            View PDF
-          </Button>
-        )}
-        {post.audio && (
-          <AudioPlayerContainer>
-            <audio ref={audioRef} src={post.audio} />
-            <IconButton onClick={handlePlayPause}>
-              {isPlaying ? <Pause htmlColor="#6d4c41" /> : <PlayArrow htmlColor="#6d4c41" />}
-            </IconButton>
-            <Slider
-              value={currentTime}
-              max={duration}
-              onChange={handleSliderChange}
-              aria-labelledby="continuous-slider"
-            />
-            <span>{formatTime(currentTime)} / {formatTime(duration)}</span>
-          </AudioPlayerContainer>
-        )}
-      </PostCenter>
+          <PostText>{post.desc}</PostText>
+          {post.pdf && (
+            <Button onClick={() => setPdfDialogOpen(true)} startIcon={<PictureAsPdf />}>
+              View PDF
+            </Button>
+          )}
+          {post.audio && (
+            <AudioPlayerContainer>
+              <audio ref={audioRef} src={post.audio} />
+              <IconButton onClick={handlePlayPause}>
+                {isPlaying ? <Pause htmlColor="#6d4c41" /> : <PlayArrow htmlColor="#6d4c41" />}
+              </IconButton>
+              <Slider
+                value={currentTime}
+                max={duration}
+                onChange={handleSliderChange}
+                aria-labelledby="continuous-slider"
+              />
+              <span>{formatTime(currentTime)} / {formatTime(duration)}</span>
+            </AudioPlayerContainer>
+          )}
+        </PostCenter>
       </PostWrapper>
       <AlertDialogSlide open={dialogOpen} handleClose={() => setDialogOpen(false)} />
       <ReactionDialog
@@ -282,4 +282,3 @@ function Post({ post, toggleFavorite }) {
 }
 
 export default Post;
-

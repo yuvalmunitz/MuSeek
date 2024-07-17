@@ -1,6 +1,9 @@
-import React from 'react';
-import styled from 'styled-components';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../firestore/AuthContext';
+import { getUserFavorites } from '../../firestore/users';
 import { Users } from '../../dummyData';
+import styled from 'styled-components';
+import FavoritesPopup from '../HomeComponents/favoritesPopup/FavoritesPopup';
 import Online from '../online/Online';
 import { Card, CardContent, Typography, Avatar, Box, Button } from '@mui/material';
 import { Star } from '@mui/icons-material';
@@ -58,7 +61,25 @@ const FriendAvatar = styled(Avatar)`
   margin-right: 10px;
 `;
 
-export default function Rightbar({ profile, openFavorites }) {
+export default function Rightbar({ profile }) {
+  const { currentUser } = useAuth();
+  const [favorites, setFavorites] = useState([]);
+  const [showFavorites, setShowFavorites] = useState(false);
+
+  useEffect(() => {
+    const fetchFavorites = async () => {
+      if (currentUser) {
+        try {
+          const userFavorites = await getUserFavorites(currentUser.uid);
+          setFavorites(userFavorites);
+        } catch (error) {
+          console.error("Error fetching favorites:", error);
+        }
+      }
+    };
+    fetchFavorites();
+  }, [currentUser]);
+
   const HomeRightbar = () => {
     return (
       <>
@@ -67,7 +88,7 @@ export default function Rightbar({ profile, openFavorites }) {
           color="primary"
           startIcon={<Star />}
           style={{ backgroundColor: '#6d4c41', color: '#fff', marginBottom: '20px' }}
-          onClick={openFavorites}
+          onClick={() => setShowFavorites(true)}
         >
           Favorites
         </Button>
@@ -125,6 +146,11 @@ export default function Rightbar({ profile, openFavorites }) {
       <RightbarWrapper>
         {profile ? <ProfileRightbar /> : <HomeRightbar />}
       </RightbarWrapper>
+      <FavoritesPopup 
+        open={showFavorites} 
+        onClose={() => setShowFavorites(false)} 
+        favorites={favorites}
+      />
     </RightbarContainer>
   );
 }

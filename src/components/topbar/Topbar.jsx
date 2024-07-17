@@ -85,15 +85,6 @@ const StyledButton = styled.button`
   margin-right: 10px;
 `;
 
-// const TopbarImg = styled.img`
-//   width: 32px;
-//   height: 32px;
-//   border-radius: 50%;
-//   object-fit: cover;
-//   cursor: pointer;
-//   margin-left: 5px;
-// `;
-
 const UserInfo = styled.div`
   display: flex;
   align-items: center;

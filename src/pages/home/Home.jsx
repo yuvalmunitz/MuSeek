@@ -4,6 +4,8 @@ import Feed from '../../components/HomeComponents/feed/Feed';
 import Rightbar from "../../components/rightbar/Rightbar";
 import styled from 'styled-components';
 import { useAuth } from '../../firestore/AuthContext';
+import { addFavorite, removeFavorite, getUserFavorites } from '../../firestore/users';
+import FavoritesPopup from '../../components/HomeComponents/favoritesPopup/FavoritesPopup';
 
 const HomeContainer = styled.div`
   display: flex;
@@ -12,40 +14,56 @@ const HomeContainer = styled.div`
 `;
 
 function Home() {
-  console.log('Home component rendering');
   const { currentUser } = useAuth();
+  const [favorites, setFavorites] = useState([]);
   const [showFavorites, setShowFavorites] = useState(false);
 
   useEffect(() => {
-    console.log('Current user:', currentUser);
+    if (currentUser) {
+      fetchUserFavorites();
+    }
   }, [currentUser]);
 
-  const openFavorites = () => {
-    setShowFavorites(true);
+  const fetchUserFavorites = async () => {
+    try {
+      const userFavorites = await getUserFavorites(currentUser.uid);
+      setFavorites(userFavorites);
+    } catch (error) {
+      console.error("Error fetching favorites:", error);
+    }
   };
 
-  const closeFavorites = () => {
-    setShowFavorites(false);
+  const handleFavoriteToggle = async (postId, isFavorite) => {
+    try {
+      if (isFavorite) {
+        await addFavorite(currentUser.uid, postId);
+        setFavorites(prev => [...prev, postId]);
+      } else {
+        await removeFavorite(currentUser.uid, postId);
+        setFavorites(prev => prev.filter(id => id !== postId));
+      }
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+    }
   };
-
-  if (!currentUser) {
-    console.log('No current user');
-    return <div>Loading...</div>;
-  }
 
   return (
     <>
       <Topbar />
       <HomeContainer>
-        <Feed
-          showFavorites={showFavorites}
-          setShowFavorites={setShowFavorites}
-          closeFavorites={closeFavorites}
-        />
-        <Rightbar openFavorites={openFavorites} />
+        <Feed onFavoriteToggle={handleFavoriteToggle} favorites={favorites} />
+        <Rightbar openFavorites={() => setShowFavorites(true)} />
       </HomeContainer>
+      <FavoritesPopup 
+        open={showFavorites}
+        onClose={() => setShowFavorites(false)}
+        favorites={favorites}
+        onFavoriteToggle={handleFavoriteToggle}
+      />
     </>
   );
 }
 
 export default Home;
+
+
