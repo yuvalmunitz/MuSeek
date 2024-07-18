@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import Topbar from "../../components/topbar/Topbar";
 import Feed from '../../components/HomeComponents/feed/Feed';
+import Favorites from '../../components/HomeComponents/favorites/Favorites';
 import Rightbar from "../../components/rightbar/Rightbar";
 import styled from 'styled-components';
 import { useAuth } from '../../firestore/AuthContext';
 import { addFavorite, removeFavorite, getUserFavorites } from '../../firestore/users';
-import FavoritesPopup from '../../components/HomeComponents/favoritesPopup/FavoritesPopup';
 
 const HomeContainer = styled.div`
   display: flex;
@@ -16,7 +17,6 @@ const HomeContainer = styled.div`
 function Home() {
   const { currentUser } = useAuth();
   const [favorites, setFavorites] = useState([]);
-  const [showFavorites, setShowFavorites] = useState(false);
 
   useEffect(() => {
     if (currentUser) {
@@ -27,6 +27,7 @@ function Home() {
   const fetchUserFavorites = async () => {
     try {
       const userFavorites = await getUserFavorites(currentUser.uid);
+      console.log("Fetched user favorites:", userFavorites);
       setFavorites(userFavorites);
     } catch (error) {
       console.error("Error fetching favorites:", error);
@@ -42,6 +43,7 @@ function Home() {
         await removeFavorite(currentUser.uid, postId);
         setFavorites(prev => prev.filter(id => id !== postId));
       }
+      console.log("Favorites updated:", favorites);
     } catch (error) {
       console.error("Error toggling favorite:", error);
     }
@@ -51,19 +53,14 @@ function Home() {
     <>
       <Topbar />
       <HomeContainer>
-        <Feed onFavoriteToggle={handleFavoriteToggle} favorites={favorites} />
-        <Rightbar openFavorites={() => setShowFavorites(true)} />
+        <Routes>
+          <Route path="/" element={<Feed onFavoriteToggle={handleFavoriteToggle} favorites={favorites} />} />
+          <Route path="/favorites" element={<Favorites onFavoriteToggle={handleFavoriteToggle} />} />
+        </Routes>
+        <Rightbar />
       </HomeContainer>
-      <FavoritesPopup 
-        open={showFavorites}
-        onClose={() => setShowFavorites(false)}
-        favorites={favorites}
-        onFavoriteToggle={handleFavoriteToggle}
-      />
     </>
   );
 }
 
 export default Home;
-
-
