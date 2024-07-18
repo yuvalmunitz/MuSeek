@@ -249,7 +249,6 @@
 //     }
 // };
 
-
 import { auth, db, storage } from '../firebase-config';
 import { 
     getDoc, 
@@ -267,8 +266,8 @@ import {
     orderBy
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-const DEFAULT_AVATAR_URL = "https://example.com/default-avatar.png";
 
+const DEFAULT_AVATAR_URL = "https://example.com/default-avatar.png";
 export const getOrCreateUser = async (uid) => {
     try {
         const userRef = doc(db, "users", uid);
@@ -276,10 +275,11 @@ export const getOrCreateUser = async (uid) => {
         
         if (userSnap.exists()) {
             const userData = userSnap.data();
+            console.log("Existing user data:", userData);
             return { 
                 id: userSnap.id, 
                 ...userData,
-                photoURL: userData.photoURL === DEFAULT_AVATAR_URL ? null : userData.photoURL
+                photoURL: userData.photoURL || DEFAULT_AVATAR_URL
             };
         } else {
             console.log("User doesn't exist, creating new user");
@@ -288,22 +288,21 @@ export const getOrCreateUser = async (uid) => {
                 throw new Error("No authenticated user found");
             }
 
-            let photoURL = currentUser.photoURL;
+            let photoURL = currentUser.photoURL || DEFAULT_AVATAR_URL;
 
-            if (photoURL && photoURL.includes('googleusercontent.com')) {
+            if (photoURL && photoURL !== DEFAULT_AVATAR_URL) {
                 try {
-                    console.log("Downloading and uploading Google profile picture");
+                    console.log("Downloading and uploading profile picture");
                     const response = await fetch(photoURL);
                     const blob = await response.blob();
                     const storageRef = ref(storage, `userPhotos/${uid}/profile.jpg`);
                     await uploadBytes(storageRef, blob);
                     photoURL = await getDownloadURL(storageRef);
+                    console.log("Uploaded photo URL:", photoURL);
                 } catch (error) {
                     console.error("Error processing profile picture:", error);
-                    photoURL = null;
+                    photoURL = DEFAULT_AVATAR_URL;
                 }
-            } else if (photoURL === DEFAULT_AVATAR_URL) {
-                photoURL = null;
             }
 
             const newUser = {
@@ -320,7 +319,7 @@ export const getOrCreateUser = async (uid) => {
                 experience: ""
             };
 
-            console.log("Setting new user document in Firestore");
+            console.log("Setting new user document in Firestore:", newUser);
             await setDoc(userRef, newUser);
             return { id: uid, ...newUser };
         }
@@ -334,6 +333,7 @@ export const updateUserDisplayName = async (uid, displayName) => {
     try {
         const userRef = doc(db, "users", uid);
         await updateDoc(userRef, { displayName });
+        console.log(`Updated display name for user ${uid}:`, displayName);
     } catch (e) {
         console.error("Error updating display name: ", e);
         throw new Error(e.message);
@@ -343,9 +343,9 @@ export const updateUserDisplayName = async (uid, displayName) => {
 export const updateUserPhotoURL = async (uid, photoURL) => {
     try {
         const userRef = doc(db, "users", uid);
-        await updateDoc(userRef, { 
-            photoURL: photoURL === DEFAULT_AVATAR_URL ? null : photoURL 
-        });
+        const newPhotoURL = photoURL === DEFAULT_AVATAR_URL ? null : photoURL;
+        await updateDoc(userRef, { photoURL: newPhotoURL });
+        console.log(`Updated photo URL for user ${uid}:`, newPhotoURL);
     } catch (e) {
         console.error("Error updating photo URL: ", e);
         throw new Error(e.message);
@@ -356,6 +356,7 @@ export const updateUserBio = async (uid, bio) => {
     try {
         const userRef = doc(db, "users", uid);
         await updateDoc(userRef, { bio });
+        console.log(`Updated bio for user ${uid}`);
     } catch (e) {
         console.error("Error updating bio: ", e);
         throw new Error(e.message);
@@ -366,6 +367,7 @@ export const updateUserGenres = async (uid, genres) => {
     try {
         const userRef = doc(db, "users", uid);
         await updateDoc(userRef, { genres });
+        console.log(`Updated genres for user ${uid}:`, genres);
     } catch (e) {
         console.error("Error updating genres: ", e);
         throw new Error(e.message);
@@ -376,6 +378,7 @@ export const updateUserType = async (uid, userType) => {
     try {
         const userRef = doc(db, "users", uid);
         await updateDoc(userRef, { userType });
+        console.log(`Updated user type for user ${uid}:`, userType);
     } catch (e) {
         console.error("Error updating user type: ", e);
         throw new Error(e.message);
@@ -386,6 +389,7 @@ export const updateUserPerformer = async (uid, performer) => {
     try {
         const userRef = doc(db, "users", uid);
         await updateDoc(userRef, { performer });
+        console.log(`Updated performer status for user ${uid}:`, performer);
     } catch (e) {
         console.error("Error updating performer status: ", e);
         throw new Error(e.message);
@@ -396,6 +400,7 @@ export const updateUserRecorder = async (uid, recorder) => {
     try {
         const userRef = doc(db, "users", uid);
         await updateDoc(userRef, { recorder });
+        console.log(`Updated recorder status for user ${uid}:`, recorder);
     } catch (e) {
         console.error("Error updating recorder status: ", e);
         throw new Error(e.message);
@@ -406,11 +411,13 @@ export const updateUserExperience = async (uid, experience) => {
     try {
         const userRef = doc(db, "users", uid);
         await updateDoc(userRef, { experience });
+        console.log(`Updated experience for user ${uid}:`, experience);
     } catch (e) {
         console.error("Error updating experience: ", e);
         throw new Error(e.message);
     }
 };
+
 export const addFavorite = async (uid, postId) => {
     try {
         const userRef = doc(db, "users", uid);
@@ -443,6 +450,7 @@ export const getUserFavorites = async (uid) => {
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
             const userData = userSnap.data();
+            console.log(`Retrieved favorites for user ${uid}:`, userData.favorites);
             return userData.favorites || [];
         } else {
             console.log("No such user!");
@@ -454,17 +462,17 @@ export const getUserFavorites = async (uid) => {
     }
 };
 
-
 export const getUser = async (uid) => {
     try {
         const userRef = doc(db, "users", uid);
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
             const userData = userSnap.data();
+            console.log(`Retrieved user data for ${uid}:`, userData);
             return { 
                 id: userSnap.id, 
                 ...userData,
-                photoURL: userData.photoURL === DEFAULT_AVATAR_URL ? null : userData.photoURL
+                photoURL: userData.photoURL && userData.photoURL !== DEFAULT_AVATAR_URL ? userData.photoURL : null
             };
         } else {
             console.log("No such user!");
@@ -479,6 +487,13 @@ export const getUser = async (uid) => {
 export const addPostToUser = async (uid, postData) => {
     try {
         const userRef = doc(db, "users", uid);
+        const userSnap = await getDoc(userRef);
+        if (!userSnap.exists()) {
+            throw new Error("User not found");
+        }
+        const userData = userSnap.data();
+        console.log("User data for post:", userData);
+        
         let audioURL = null;
         let pdfURL = null;
 
@@ -500,8 +515,11 @@ export const addPostToUser = async (uid, postData) => {
             pdf: pdfURL,
             createdAt: new Date().toISOString(),
             userId: uid,
-            userPhotoURL: postData.userPhotoURL === DEFAULT_AVATAR_URL ? null : postData.userPhotoURL
+            username: userData.displayName || "",
+            userPhotoURL: userData.photoURL || null
         };
+
+        console.log("New post data:", newPost);
 
         const postRef = await addDoc(collection(db, "posts"), newPost);
         const postId = postRef.id;
@@ -564,11 +582,16 @@ export const getUserPosts = async (uid) => {
         const postsRef = collection(db, "posts");
         const q = query(postsRef, where("userId", "==", uid), orderBy("createdAt", "desc"));
         const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-            userPhotoURL: doc.data().userPhotoURL === DEFAULT_AVATAR_URL ? null : doc.data().userPhotoURL
-        }));
+        const posts = querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                userPhotoURL: data.userPhotoURL || null
+            };
+        });
+        console.log(`Retrieved ${posts.length} posts for user ${uid}:`, posts);
+        return posts;
     } catch (e) {
         console.error("Error getting user posts: ", e);
         throw new Error(e.message);

@@ -11,7 +11,9 @@ import Inbox from "./pages/inbox/Inbox";
 import MusicPlayer from "./pages/musicPlayer/MusicPlayer";
 import PDFReader from "./pages/pdfReader/PdfReader";
 import OnBoarding1 from './pages/on_boarding/OnBoarding';
+import FavoritesPopup from './components/HomeComponents/favoritesPopup/FavoritesPopup';
 
+          {/* <Route path="/FavoritesPopup" element={<FavoritesPopup />} /> */}
 
 
 function App() {
