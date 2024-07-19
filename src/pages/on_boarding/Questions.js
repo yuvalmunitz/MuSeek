@@ -2,7 +2,7 @@ const questions = [
   
   {
     question: "What type of user are you?",
-    options: ["Listener", "Artist", "Producer", "Industry Professional"],
+    options: ["Lyricist", "Composer", "Both"],
     isMultipleChoice: false,
     field: "userType"
   },
