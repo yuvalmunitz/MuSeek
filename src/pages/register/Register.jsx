@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { auth, provider, signInWithPopup } from '../../firebase-config'; // Update the path as needed
 import GoogleIcon from '@mui/icons-material/Google'; // Import the Google icon
+import { doc, getDoc, setDoc } from 'firebase/firestore'; // Import Firestore functions
+import { db } from '../../firebase-config'; // Import your Firestore instance
 
 const RegisterContainer = styled.div`
   width: 100vw;
@@ -83,8 +85,26 @@ export default function Register() {
   const handleGoogleSignIn = async () => {
     try {
       const result = await signInWithPopup(auth, provider);
-      console.log('Google Sign-In Result:', result.user);
-      navigate('/onboarding');
+      const user = result.user;
+      console.log('Google Sign-In Result:', user);
+
+      // Check if user is already registered in Firestore
+      const userDocRef = doc(db, 'users', user.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (!userDoc.exists()) {
+        // User is not registered, register them and redirect to /OnBoarding
+        await setDoc(userDocRef, {
+          uid: user.uid,
+          displayName: user.displayName,
+          email: user.email,
+          photoURL: user.photoURL,
+        });
+        navigate('/OnBoarding');
+      } else {
+        // User is already registered, redirect to /home
+        navigate('/home');
+      }
     } catch (error) {
       console.error('Google Sign-In Error:', error);
     }
