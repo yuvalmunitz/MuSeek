@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { auth, provider, signInWithPopup } from '../../firebase-config'; // Update the path as needed
@@ -11,19 +11,31 @@ const RegisterContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+  margin: 0;
+  padding: 0;
 `;
 
 const RegisterWrapper = styled.div`
   width: 70%;
   height: 70%;
   display: flex;
+  align-items: center;
 `;
 
 const RegisterLeft = styled.div`
   flex: 1;
   display: flex;
-  flex-direction: column;
   justify-content: center;
+  align-items: center;
+  position: relative;
+  border-radius: 10px 0 0 10px; /* Rounded corners on the left */
+`;
+
+const MusicImage = styled.img`
+  width: 80%;
+  height: 80%;
+  object-fit: cover;
+  border-radius: 10px 0 0 10px; /* Rounded corners */
 `;
 
 const RegisterRight = styled.div`
@@ -31,6 +43,8 @@ const RegisterRight = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
+  text-align: center;
 `;
 
 const RegisterLogo = styled.h3`
@@ -43,32 +57,10 @@ const RegisterLogo = styled.h3`
 const RegisterDesc = styled.span`
   font-size: 24px;
   color: #3e2723; /* Deep brown color */
+  margin-bottom: 20px;
 `;
 
-const RegisterBox = styled.div`
-  height: 450px; /* Increased height to accommodate Google button */
-  padding: 20px;
-  background-color: #f5f5f5; /* Light brownish background */
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-`;
-
-const RegisterInput = styled.input`
-  height: 50px;
-  border-radius: 10px;
-  border: 1px solid #8d6e63; /* Brown border */
-  font-size: 18px;
-  padding-left: 20px;
-
-  &:focus {
-    outline: none;
-    border: 1px solid #5d4037; /* Dark brown border on focus */
-  }
-`;
-
-const RegisterButton = styled.button`
+const GoogleButton = styled.button`
   height: 50px;
   border-radius: 10px;
   border: none;
@@ -77,84 +69,42 @@ const RegisterButton = styled.button`
   font-size: 20px;
   font-weight: 500;
   cursor: pointer;
-`;
-
-const GoogleButton = styled.button`
-  height: 50px;
-  border-radius: 10px;
-  border: none;
-  background-color: #6d4c41; /* Google red background */
-  color: white;
-  font-size: 20px;
-  font-weight: 500;
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  max-width: 300px;
   margin-top: 20px;
 `;
 
 export default function Register() {
   const navigate = useNavigate();
-  const [isSignUpClicked, setIsSignUpClicked] = useState(false);
 
   const handleGoogleSignIn = async () => {
-    const user = auth.currentUser;
-
-    if (user) {
-      // User is already signed in
-      console.log('User already signed in:', user);
-      navigate('/home');
-    } else {
-      // User is not signed in, proceed with Google sign-in
-      try {
-        const result = await signInWithPopup(auth, provider);
-        console.log('Google Sign-In Result:', result.user);
-        navigate('/onboarding');
-      } catch (error) {
-        console.error('Google Sign-In Error:', error);
-      }
+    try {
+      const result = await signInWithPopup(auth, provider);
+      console.log('Google Sign-In Result:', result.user);
+      navigate('/onboarding');
+    } catch (error) {
+      console.error('Google Sign-In Error:', error);
     }
-  };
-
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      console.log('Auth State Changed - User:', user);
-      if (user && isSignUpClicked) {
-        navigate('/home');
-      }
-    });
-
-    return () => unsubscribe();
-  }, [navigate, isSignUpClicked]);
-
-  const handleSignUp = async () => {
-    console.log('Sign Up Button Clicked');
-    setIsSignUpClicked(true);
-    // Add actual sign-up logic here
   };
 
   return (
     <RegisterContainer>
       <RegisterWrapper>
         <RegisterLeft>
+          <MusicImage src='/assets/onboard.png' alt='Music' /> {/* Path to your music-themed image */}
+        </RegisterLeft>
+        <RegisterRight>
           <RegisterLogo>MuSeek</RegisterLogo>
           <RegisterDesc>
             Connect with friends and the world around you on MuSeek.
           </RegisterDesc>
-        </RegisterLeft>
-        <RegisterRight>
-          <RegisterBox>
-            <RegisterInput placeholder="Username" />
-            <RegisterInput placeholder="Email" />
-            <RegisterInput placeholder="Password" />
-            <RegisterInput placeholder="Password Again" />
-            <RegisterButton onClick={handleSignUp}>Sign Up</RegisterButton>
-            <GoogleButton onClick={handleGoogleSignIn}>
-              <GoogleIcon style={{ marginRight: '10px' }} />
-              Sign in with Google
-            </GoogleButton>
-          </RegisterBox>
+          <GoogleButton onClick={handleGoogleSignIn}>
+            <GoogleIcon style={{ marginRight: '10px' }} />
+            Sign in with Google
+          </GoogleButton>
         </RegisterRight>
       </RegisterWrapper>
     </RegisterContainer>
