@@ -7,6 +7,7 @@ import Rightbar from "../../components/rightbar/Rightbar";
 import styled from 'styled-components';
 import { useAuth } from '../../firestore/AuthContext';
 import { addFavorite, removeFavorite, getUserFavorites } from '../../firestore/users';
+import ScrollUpButton from '../../components/HomeComponents/scrollUp/ScrollUpButton'; // Correct the import path
 
 const HomeContainer = styled.div`
   display: flex;
@@ -50,16 +51,17 @@ function Home() {
   };
 
   return (
-    <>
-      <Topbar />
-      <HomeContainer>
-        <Routes>
-          <Route path="/" element={<Feed onFavoriteToggle={handleFavoriteToggle} favorites={favorites} />} />
-          <Route path="/favorites" element={<Favorites onFavoriteToggle={handleFavoriteToggle} />} />
-        </Routes>
-        <Rightbar />
-      </HomeContainer>
-    </>
+      <>
+        <Topbar />
+        <HomeContainer>
+          <Routes>
+            <Route path="/" element={<Feed onFavoriteToggle={handleFavoriteToggle} favorites={favorites} />} />
+            <Route path="/favorites" element={<Favorites onFavoriteToggle={handleFavoriteToggle} />} />
+          </Routes>
+          <Rightbar />
+        </HomeContainer>
+        <ScrollUpButton /> {/* Add the Scroll Up Button here */}
+      </>
   );
 }
 
