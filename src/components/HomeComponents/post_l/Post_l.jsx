@@ -73,13 +73,13 @@ const AudioPlayerContainer = styled.div`
 const StyledSlider = styled(Slider)({
   color: '#6d4c41',
   '& .MuiSlider-thumb': {
-    backgroundColor: '#5d4037',
+    backgroundColor: '#6d4c41',
   },
   '& .MuiSlider-track': {
-    backgroundColor: '#5d4037',
+    backgroundColor: '#6d4c41',
   },
   '& .MuiSlider-rail': {
-    backgroundColor: '#d7ccc8',
+    backgroundColor: '#6d4c41',
   },
 });
 
