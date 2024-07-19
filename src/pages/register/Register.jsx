@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { auth, provider, signInWithPopup } from '../../firebase-config'; // Update the path as needed
 import GoogleIcon from '@mui/icons-material/Google'; // Import the Google icon
-// import { createFirestoreUser } from '../../firestore/users';
+
 const RegisterContainer = styled.div`
   width: 100vw;
   height: 100vh;
@@ -96,19 +96,42 @@ const GoogleButton = styled.button`
 
 export default function Register() {
   const navigate = useNavigate();
+  const [isSignUpClicked, setIsSignUpClicked] = useState(false);
 
-  const handleGoogleSignIn = () => {
-    signInWithPopup(auth, provider)
-      .then((result) => {
-        //createFirestoreUser(user)
-        console.log(result.user);
-        // Redirect to onboarding page
+  const handleGoogleSignIn = async () => {
+    const user = auth.currentUser;
+
+    if (user) {
+      // User is already signed in
+      console.log('User already signed in:', user);
+      navigate('/home');
+    } else {
+      // User is not signed in, proceed with Google sign-in
+      try {
+        const result = await signInWithPopup(auth, provider);
+        console.log('Google Sign-In Result:', result.user);
         navigate('/onboarding');
-      })
-      .catch((error) => {
-        console.error(error);
-        // Handle errors here
-      });
+      } catch (error) {
+        console.error('Google Sign-In Error:', error);
+      }
+    }
+  };
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      console.log('Auth State Changed - User:', user);
+      if (user && isSignUpClicked) {
+        navigate('/home');
+      }
+    });
+
+    return () => unsubscribe();
+  }, [navigate, isSignUpClicked]);
+
+  const handleSignUp = async () => {
+    console.log('Sign Up Button Clicked');
+    setIsSignUpClicked(true);
+    // Add actual sign-up logic here
   };
 
   return (
@@ -126,7 +149,7 @@ export default function Register() {
             <RegisterInput placeholder="Email" />
             <RegisterInput placeholder="Password" />
             <RegisterInput placeholder="Password Again" />
-            <RegisterButton>Sign Up</RegisterButton>
+            <RegisterButton onClick={handleSignUp}>Sign Up</RegisterButton>
             <GoogleButton onClick={handleGoogleSignIn}>
               <GoogleIcon style={{ marginRight: '10px' }} />
               Sign in with Google

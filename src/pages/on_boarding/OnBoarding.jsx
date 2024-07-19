@@ -161,9 +161,9 @@ const OnBoarding = () => {
     }
   };
 
-  const handleSkip = () => {
-    navigate('/Home');
-  };
+  // const handleSkip = () => {
+  //   navigate('/Home');
+  // };
 
   const handleAgree = () => {
     setOpenCopyrightDialog(false);
@@ -261,9 +261,9 @@ const OnBoarding = () => {
         <StyledButton onClick={handleSubmit} variant="contained">
           Submit
         </StyledButton>
-        <StyledButton onClick={handleSkip} variant="outlined">
+        {/* <StyledButton onClick={handleSkip} variant="outlined">
           Skip
-        </StyledButton>
+        </StyledButton> */}
       </Box>
       <Typography variant="body2" mt={2} color="textSecondary">
         Disclaimer: By pressing Submit or Skip, you can proceed to the main application. Your answers will be saved if you choose to submit.
