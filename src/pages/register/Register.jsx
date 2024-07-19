@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { auth, provider, signInWithPopup } from '../../firebase-config'; // Update the path as needed
 import GoogleIcon from '@mui/icons-material/Google'; // Import the Google icon
+import { useEffect } from 'react';
 // import { createFirestoreUser } from '../../firestore/users';
 const RegisterContainer = styled.div`
   width: 100vw;
@@ -110,6 +111,22 @@ export default function Register() {
         // Handle errors here
       });
   };
+
+
+
+useEffect(() => {
+  // Check if user is already signed in
+  const unsubscribe = auth.onAuthStateChanged((user) => {
+    if (user) {
+      // User is signed in, redirect to home page
+      navigate('/home');
+    }
+  });
+
+  // Cleanup subscription on unmount
+  return () => unsubscribe();
+}, [navigate]);
+
 
   return (
     <RegisterContainer>
