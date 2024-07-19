@@ -21,6 +21,7 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CheckIcon from '@mui/icons-material/Check';
 import EmailIcon from '@mui/icons-material/Email';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
 import { styled } from '@mui/system';
 import MessageDialog from '../messageDialog/MessageDialog';
 
@@ -33,8 +34,8 @@ const BackgroundContainer = styled(Box)(({ theme }) => ({
 }));
 
 const NotificationsContainer = styled(Paper)(({ theme }) => ({
-  width: '80%', // Make it take up half the screen width
-  height: '80vh', // Make it take up half the screen height
+  width: '80%',
+  height: '80vh',
   borderRadius: 10,
   overflow: 'hidden',
   boxShadow: theme.shadows[3],
@@ -52,7 +53,7 @@ const NotificationHeader = styled(Box)(({ theme }) => ({
 }));
 
 const NotificationList = styled(List)(({ theme }) => ({
-  maxHeight: '80%', // Adjust height to fit container
+  maxHeight: '80%',
   overflowY: 'auto',
 }));
 
@@ -64,25 +65,6 @@ const NotificationItem = styled(ListItem)(({ theme }) => ({
   justifyContent: 'space-between',
   alignItems: 'center'
 }));
-const notificationsData = [
-  { id: 1, title: 'New Reaction: Emily Smith', message: 'Emily loved your latest lyrics and suggested a new verse.', time: '2d', read: false },
-  { id: 2, title: 'Lyrics Review: David Brown', message: 'David provided feedback on your song "Winds of Change."', time: '1d', read: false },
-  { id: 3, title: 'Collaboration Request: Sarah Lee', message: 'Sarah wants to collaborate on your song "Morning Dew."', time: '4h', read: false },
-  { id: 4, title: 'Lyrics Approved: "Echoes"', message: 'Your lyrics for "Echoes" have been approved.', time: '1w', read: true },
-  { id: 5, title: 'New Comment: "Ocean Waves"', message: 'Someone commented on your song "Ocean Waves."', time: '3d', read: true },
-  { id: 6, title: 'Melody Suggestion: Mark Johnson', message: 'Mark suggested a melody for your song "Starlight."', time: '5d', read: false },
-  { id: 7, title: 'Song Entry: "Whispers"', message: 'Your song "Whispers" has been entered into the contest.', time: '6h', read: false },
-  { id: 8, title: 'Feedback: "Silent Dreams"', message: 'You received feedback on "Silent Dreams."', time: '2h', read: false },
-  { id: 9, title: 'Lyrics Updated: "Sunrise"', message: 'Your lyrics for "Sunrise" have been updated successfully.', time: '1w', read: true },
-  { id: 10, title: 'Review Request: "Moonlight"', message: 'You have a new request to review the song "Moonlight."', time: '3w', read: false },
-  { id: 11, title: 'Melody Idea: "Raindrops"', message: 'Check out this new melody idea for "Raindrops."', time: '7h', read: false },
-  { id: 12, title: 'Collab Approved: "Harmony"', message: 'Your collaboration request for "Harmony" has been approved.', time: '4d', read: true },
-  { id: 13, title: 'Lyrics Published: "Heartbeats"', message: 'Your lyrics for "Heartbeats" have been published successfully.', time: '1h', read: false },
-  { id: 14, title: 'New Submission: "Mystery"', message: 'You have a new lyrics submission titled "Mystery" to review.', time: '3d', read: false },
-  { id: 15, title: 'Recording Scheduled: "Dreamscape"', message: 'Your recording for "Dreamscape" is scheduled for tomorrow.', time: '30m', read: false },
-];
-
-
 
 const StyledTextField = styled(TextField)({
   '& label.Mui-focused': {
@@ -112,17 +94,71 @@ const StyledButton = styled(Button)({
   },
 });
 
+const notificationsData = [
+  {
+    id: '1',
+    user: {
+      id: 'user1',
+      name: 'Emily Smith'
+    },
+    content: 'Emily loved your latest lyrics and suggested a new verse.',
+    timestamp: '2024-07-17T10:00:00Z',
+    type: 'New Reaction',
+    isRead: false
+  },
+  {
+    id: '2',
+    user: {
+      id: 'user2',
+      name: 'David Brown'
+    },
+    content: 'David provided feedback on your song "Winds of Change." Check out the attached audio file.',
+    timestamp: '2024-07-18T14:30:00Z',
+    type: 'Lyrics Review',
+    isRead: false,
+    fileUrl: 'https://firebasestorage.googleapis.com/v0/b/museek-huji.appspot.com/o/posts%2F8zjLfzzJYibVAK82PCaOSGbTazm1%2Faudio_1721061900329.mp3?alt=media&token=20d12b1b-47bc-46d4-96f9-8682aadeb2d5'
+  },
+  {
+    id: '3',
+    user: {
+      id: 'user3',
+      name: 'Sarah Lee'
+    },
+    content: 'Sarah wants to collaborate on your song "Morning Dew." She has attached a PDF with her ideas.',
+    timestamp: '2024-07-19T08:15:00Z',
+    type: 'Collaboration Request',
+    isRead: false,
+    fileUrl: 'https://firebasestorage.googleapis.com/v0/b/museek-huji.appspot.com/o/posts%2F8zjLfzzJYibVAK82PCaOSGbTazm1%2Fpdf_1721239222609.pdf?alt=media&token=c774c307-38c0-4bdb-b363-959386a94733'
+  },
+  {
+    id: '4',
+    user: {
+      id: 'system',
+      name: 'System'
+    },
+    content: 'Your lyrics for "Echoes" have been approved.',
+    timestamp: '2024-07-12T16:45:00Z',
+    type: 'Lyrics Approved',
+    isRead: true
+  },
+  {
+    id: '5',
+    user: {
+      id: 'anonymous',
+      name: 'Anonymous'
+    },
+    content: 'Someone commented on your song "Ocean Waves."',
+    timestamp: '2024-07-16T11:20:00Z',
+    type: 'New Comment',
+    isRead: true
+  }
+];
 
 export default function Inbox() {
-  const [open, setOpen] = React.useState(true);
   const [notifications, setNotifications] = useState(notificationsData);
   const [mailDialogOpen, setMailDialogOpen] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState(null);
   const [messageDialogOpen, setMessageDialogOpen] = useState(false);
-
-  const handleClose = () => {
-    setOpen(false);
-  };
 
   const handleDelete = (event, id) => {
     event.stopPropagation();
@@ -132,7 +168,7 @@ export default function Inbox() {
   const handleRead = (event, id) => {
     event.stopPropagation();
     setNotifications(notifications.map(notification =>
-      notification.id === id ? { ...notification, read: true } : notification
+      notification.id === id ? { ...notification, isRead: true } : notification
     ));
   };
 
@@ -157,6 +193,19 @@ export default function Inbox() {
     setSelectedNotification(null);
   };
 
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 1) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays}d`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)}w`;
+    return `${Math.floor(diffDays / 30)}m`;
+  };
+
   return (
     <BackgroundContainer>
       <NotificationsContainer>
@@ -167,13 +216,22 @@ export default function Inbox() {
           {notifications.map((notification) => (
             <NotificationItem key={notification.id} button onClick={() => handleNotificationClick(notification)}>
               <ListItemAvatar>
-                <Avatar style={{ backgroundColor: notification.read ? '#ccc' : '#6d4c41' }}>
+                <Avatar style={{ backgroundColor: notification.isRead ? '#ccc' : '#6d4c41' }}>
                   <NotificationsIcon />
                 </Avatar>
               </ListItemAvatar>
               <ListItemText
-                primary={notification.title}
-                secondary={notification.time}
+                primary={`${notification.type}: ${notification.user.name}`}
+                secondary={
+                  <React.Fragment>
+                    {formatDate(notification.timestamp)}
+                    {notification.fileUrl && (
+                      <Box component="span" ml={1}>
+                        <AttachFileIcon fontSize="small" />
+                      </Box>
+                    )}
+                  </React.Fragment>
+                }
               />
               <Box>
                 <IconButton onClick={(event) => handleDelete(event, notification.id)}>
@@ -194,11 +252,11 @@ export default function Inbox() {
             MuSeek
           </Typography>
         </Box>
-        <Dialog open={mailDialogOpen} onClose={handleMailDialogClose} >
+        <Dialog open={mailDialogOpen} onClose={handleMailDialogClose}>
           <DialogTitle>Send Response</DialogTitle>
           <DialogContent>
             <DialogContentText>
-              Responding to: {selectedNotification?.title}
+              Responding to: {selectedNotification?.type}
             </DialogContentText>
             <StyledTextField
               autoFocus
@@ -210,10 +268,10 @@ export default function Inbox() {
             />
           </DialogContent>
           <DialogActions>
-            <StyledButton onClick={handleMailDialogClose} >
+            <StyledButton onClick={handleMailDialogClose}>
               Cancel
             </StyledButton>
-            <StyledButton onClick={handleMailDialogClose} >
+            <StyledButton onClick={handleMailDialogClose}>
               Send
             </StyledButton>
           </DialogActions>
