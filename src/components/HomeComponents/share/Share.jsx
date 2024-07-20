@@ -856,7 +856,6 @@
 //   );
 // }
 
-
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
@@ -864,12 +863,23 @@ import NotesIcon from '@mui/icons-material/Notes';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 import CloseIcon from '@mui/icons-material/Close';
-import { Button, Slider, Typography, Dialog, DialogTitle, DialogContent, DialogActions, IconButton } from '@mui/material';
+import { 
+  Button, 
+  Slider, 
+  Typography, 
+  Dialog, 
+  DialogTitle, 
+  DialogContent, 
+  DialogActions, 
+  IconButton,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel
+} from '@mui/material';
 import { useAuth } from '../../../firestore/AuthContext';
 import { addPostToUser } from '../../../firestore/users';
 import { serverTimestamp } from 'firebase/firestore';
-
-
 
 const ShareWrapper = styled.div`
   padding: 10px;
@@ -887,22 +897,23 @@ const ShareProfileImg = styled.img`
   object-fit: cover;
   margin-right: 10px;
 `;
+
 const ShareInput = styled.input`
   border: none;
   width: 80%;
   font-size: 16px;
-  background-color: #e0dcd2;  // This matches the ShareContainer background color
-  color: #3e2723;  // Dark brown text color for better contrast
+  background-color: #e0dcd2;
+  color: #3e2723;
   padding: 10px;
   border-radius: 5px;
 
   &:focus {
     outline: none;
-    background-color: #d7ccc8;  // Slightly darker when focused for visual feedback
+    background-color: #d7ccc8;
   }
 
   &::placeholder {
-    color: #8d6e63;  // Light brown color for the placeholder text
+    color: #8d6e63;
   }
 `;
 
@@ -932,12 +943,13 @@ const ShareButton = styled.button`
   border: none;
   padding: 7px;
   border-radius: 5px;
-  background-color: #6d4c41; /* Medium brown background */
+  background-color: #6d4c41;
   font-weight: 500;
   margin-right: 20px;
   cursor: pointer;
   color: white;
 `;
+
 const ShareContainer = styled.div`
   width: 100%;
   border-radius: 10px;
@@ -1003,6 +1015,13 @@ const CloseButton = styled(IconButton)`
   color: white;
 `;
 
+const GenreSelect = styled(FormControl)({
+  minWidth: 150,
+  marginRight: '10px',
+});
+
+const genres = ["Rock", "Pop", "Jazz", "Classical", "Hip Hop", "Electronic", "Country", "R&B", "Folk", "Metal"];
+
 export default function Share({ onPostAdded }) {
   const { currentUser } = useAuth();
   const [description, setDescription] = useState('');
@@ -1014,6 +1033,7 @@ export default function Share({ onPostAdded }) {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
+  const [genre, setGenre] = useState('');
 
   useEffect(() => {
     let audio;
@@ -1034,38 +1054,37 @@ export default function Share({ onPostAdded }) {
     try {
       const newPost = {
         desc: description,
-        audio: audioFile, // Keep this as File for upload
-        pdf: pdfFile, // Keep this as File for upload
+        audio: audioFile,
+        pdf: pdfFile,
         username: currentUser.displayName,
         userPhotoURL: currentUser.photoURL,
         likes: 0,
         comments: 0,
-        date: serverTimestamp()
+        date: serverTimestamp(),
+        genre: genre
       };
 
-      // Add the post to Firestore and user's posts array
       const postId = await addPostToUser(currentUser.uid, newPost);
 
-      // Clear the form
       setDescription('');
       setAudioFile(null);
       setAudioUrl(null);
       setPdfFile(null);
       setPdfUrl(null);
-      // ... (reset other state variables)
+      setGenre('');
 
-      // Notify parent component that a new post was added
       if (onPostAdded) {
         onPostAdded({
           id: postId,
           desc: description,
-          audio: audioUrl, // Use URL for rendering
-          pdf: pdfUrl, // Use URL for rendering
+          audio: audioUrl,
+          pdf: pdfUrl,
           username: currentUser.displayName,
           userPhotoURL: currentUser.photoURL,
           likes: 0,
           comments: 0,
-          date: new Date().toLocaleString()
+          date: new Date().toLocaleString(),
+          genre: genre
         });
       }
 
@@ -1074,7 +1093,6 @@ export default function Share({ onPostAdded }) {
       console.error('Error sharing post:', error);
     }
   };
-
 
   const handleAudioUpload = (event) => {
     const file = event.target.files[0];
@@ -1132,6 +1150,10 @@ export default function Share({ onPostAdded }) {
     setPdfDialogOpen(false);
   };
 
+  const handleGenreChange = (event) => {
+    setGenre(event.target.value);
+  };
+
   return (
     <ShareContainer>
       <ShareWrapper>
@@ -1178,12 +1200,27 @@ export default function Share({ onPostAdded }) {
                   variant="contained"
                   component="span"
                   startIcon={<MusicNoteIcon />}
-                  style={{ backgroundColor: '#6d4c41', color: 'white' }}
+                  style={{ backgroundColor: '#6d4c41', color: 'white', marginRight: '10px' }}
                 >
                   Upload Audio
                 </Button>
               </label>
             </ShareOption>
+            <GenreSelect>
+              <InputLabel id="genre-select-label">Genre</InputLabel>
+              <Select
+                labelId="genre-select-label"
+                id="genre-select"
+                value={genre}
+                label="Genre"
+                onChange={handleGenreChange}
+                style={{ backgroundColor: '#6d4c41', color: 'white' }}
+              >
+                {genres.map((g) => (
+                  <MenuItem key={g} value={g}>{g}</MenuItem>
+                ))}
+              </Select>
+            </GenreSelect>
           </ShareOptions>
           <ShareButton onClick={handleShare}>Share</ShareButton>
         </ShareBottom>
@@ -1225,7 +1262,7 @@ export default function Share({ onPostAdded }) {
           {pdfFile ? (
             <PDFContainer>
               <iframe 
-                src={pdfFile} 
+                src={pdfUrl} 
                 width="100%" 
                 height="600px" 
                 style={{ border: 'none' }}
