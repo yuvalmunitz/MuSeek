@@ -15,10 +15,10 @@ import Topbar from "../../topbar/Topbar";
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#6200ea',
+      main: '#6d4c41',
     },
     secondary: {
-      main: '#f50057',
+      main: '#6d4c41',
     },
   },
   shadows: ["none", ...Array(24).fill("0px 1px 3px rgba(0,0,0,0.2), 0px 1px 1px rgba(0,0,0,0.14), 0px 2px 1px rgba(0,0,0,0.12)")],
