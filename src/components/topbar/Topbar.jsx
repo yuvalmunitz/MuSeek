@@ -127,16 +127,20 @@ export default function Topbar() {
     setImgError(true);
   };
 
+  const handleLogoClick = () => {
+    navigate('/Home');
+  };
+
   return (
     <TopbarContainer>
       <TopbarLeft>
-        <Logo>MuSeek</Logo>
+        <Logo onClick={handleLogoClick}>MuSeek</Logo>
       </TopbarLeft>
       <TopbarCenter>
         {/* <Searchbar>
           <SearchIcon />
           <SearchInput placeholder="Search for a user or a keyword" />
-        </Searchbar>/ */}
+        </Searchbar> */}
       </TopbarCenter>
       <TopbarRight>
         <StyledButton onClick={handleNavigation}>
