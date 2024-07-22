@@ -88,10 +88,7 @@ const FileButton = styled(Button)`
   && {
     color: #5d4037;
     margin-right: 10px;
-    &:hover {
-      background-color: #5d4037;
     }
-  }
 `;
 
 const StyledDialog = styled(Dialog)`

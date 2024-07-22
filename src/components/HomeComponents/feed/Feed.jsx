@@ -1,5 +1,3 @@
-// 
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 import Post from "../post_l/Post_l";
