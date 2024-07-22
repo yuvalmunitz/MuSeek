@@ -222,7 +222,7 @@ export default function Rightbar({ profile }) {
   const HomeRightbar = () => {
     return (
       <>
-        <Button
+       <Button
           component={Link}
           to="/favorites"
           variant="contained"
@@ -232,6 +232,7 @@ export default function Rightbar({ profile }) {
         >
           Favorites
         </Button>
+
         <RightbarTitle>Explore Other Artists</RightbarTitle>
         <RightbarFriendList>
           {Users.map((u) => (
@@ -242,49 +243,11 @@ export default function Rightbar({ profile }) {
     );
   };
 
-  const ProfileRightbar = () => {
-    return (
-      <>
-        <Card>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              About Me:
-            </Typography>
-            <ProfileInfoItem>
-              <ProfileInfoKey>City</ProfileInfoKey>
-              <ProfileInfoValue>New York</ProfileInfoValue>
-            </ProfileInfoItem>
-            <ProfileInfoItem>
-              <ProfileInfoKey>Genres</ProfileInfoKey>
-              <ProfileInfoValue>________</ProfileInfoValue>
-            </ProfileInfoItem>
-            <ProfileInfoItem>
-              <ProfileInfoKey>My Music:</ProfileInfoKey>
-              <ProfileInfoValue>________</ProfileInfoValue>
-            </ProfileInfoItem>
-          </CardContent>
-        </Card>
-        <Box mt={2}>
-          <Typography variant="h6" gutterBottom>
-            User Friends
-          </Typography>
-          <FriendsList>
-            {Users.slice(0, 6).map((user) => (
-              <Friend key={user.id}>
-                <FriendAvatar src={user.profilePicture} />
-                <Typography>{user.username}</Typography>
-              </Friend>
-            ))}
-          </FriendsList>
-        </Box>
-      </>
-    );
-  };
-
+  
   return (
     <RightbarContainer>
       <RightbarWrapper>
-        {profile ? <ProfileRightbar /> : <HomeRightbar />}
+        {profile ? <HomeRightbar /> : <HomeRightbar />}
       </RightbarWrapper>
     </RightbarContainer>
   );
