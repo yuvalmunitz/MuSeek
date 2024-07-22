@@ -11,6 +11,7 @@ import { db } from '../../../firebase-config';
 import { useAuth } from '../../../firestore/AuthContext';
 import Post from "../post_l/Post_l";
 import Topbar from "../../topbar/Topbar";
+import { removeFavorite } from '../../../firestore//users'; // Adjust the path as necessary
 
 const theme = createTheme({
   palette: {
@@ -74,115 +75,122 @@ const EmptyMessage = styled(Typography)(({ theme }) => ({
 }));
 
 function Favorites({ onFavoriteToggle }) {
-    const [favoritePosts, setFavoritePosts] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const { currentUser } = useAuth();
-  
-    useEffect(() => {
-      if (currentUser) {
-        fetchFavoritePosts();
-      }
-    }, [currentUser]);
-  
-    const fetchFavoritePosts = async () => {
-      if (!currentUser) {
-        console.log("No current user");
+  const [favoritePosts, setFavoritePosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const { currentUser } = useAuth();
+
+  useEffect(() => {
+    if (currentUser) {
+      fetchFavoritePosts();
+    }
+  }, [currentUser]);
+
+  const fetchFavoritePosts = async () => {
+    if (!currentUser) {
+      console.log("No current user");
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      console.log("Fetching favorite posts for user:", currentUser.uid);
+      
+      // Fetch user's favorites
+      const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+      if (!userDoc.exists()) {
+        console.log("User document not found");
+        setLoading(false);
         return;
       }
-      setLoading(true);
-      setError(null);
-      try {
-        console.log("Fetching favorite posts for user:", currentUser.uid);
-        
-        // Fetch user's favorites
-        const userDoc = await getDoc(doc(db, "users", currentUser.uid));
-        if (!userDoc.exists()) {
-          console.log("User document not found");
-          setLoading(false);
-          return;
-        }
-        const userData = userDoc.data();
-        const favorites = userData.favorites || [];
-        console.log("User's favorites:", favorites);
-  
-        if (favorites.length === 0) {
-          console.log("No favorites found");
-          setFavoritePosts([]);
-          setLoading(false);
-          return;
-        }
-  
-        // Fetch posts
-        const postsRef = collection(db, "posts");
-        const q = query(postsRef, where("__name__", "in", favorites));
-        const querySnapshot = await getDocs(q);
-        
-        const posts = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          date: doc.data().date ? doc.data().date.toDate() : new Date(),
-        }));
-  
-        console.log("Fetched posts:", posts);
-        setFavoritePosts(posts);
-      } catch (error) {
-        console.error("Error fetching favorite posts:", error);
-        setError("Failed to load favorite posts. Please try again later.");
+      const userData = userDoc.data();
+      const favorites = userData.favorites || [];
+      console.log("User's favorites:", favorites);
+
+      if (favorites.length === 0) {
+        console.log("No favorites found");
+        setFavoritePosts([]);
+        setLoading(false);
+        return;
       }
-      setLoading(false);
-    };
-  
-    const handleLocalFavoriteToggle = (postId, isFavorite) => {
-      onFavoriteToggle(postId, isFavorite);
-      if (!isFavorite) {
+
+      // Fetch posts
+      const postsRef = collection(db, "posts");
+      const q = query(postsRef, where("__name__", "in", favorites));
+      const querySnapshot = await getDocs(q);
+      
+      const posts = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        date: doc.data().date ? doc.data().date.toDate() : new Date(),
+      }));
+
+      console.log("Fetched posts:", posts);
+      setFavoritePosts(posts);
+    } catch (error) {
+      console.error("Error fetching favorite posts:", error);
+      setError("Failed to load favorite posts. Please try again later.");
+    }
+    setLoading(false);
+  };
+
+  const handleLocalFavoriteToggle = async (postId, isFavorite) => {
+    try {
+      if (isFavorite) {
+        // Code to add to favorites (if needed)
+      } else {
+        await removeFavorite(currentUser.uid, postId);
         setFavoritePosts(prev => prev.filter(post => post.id !== postId));
       }
-    };
-  
-    return (
-      <ThemeProvider theme={theme}>
-        <PageContainer>
-          <Topbar />
-          <ContentContainer>
-            <FavoritesContainer>
-              <FavoritesHeader>
-                <Typography variant="h6">Favorite Posts</Typography>
-              </FavoritesHeader>
-              <FavoritesList>
-                {loading ? (
-                  <Box display="flex" justifyContent="center" alignItems="center" height="100%">
-                    <CircularProgress />
-                  </Box>
-                ) : error ? (
-                  <EmptyMessage variant="body1" color="error">
-                    {error}
-                  </EmptyMessage>
-                ) : favoritePosts.length === 0 ? (
-                  <EmptyMessage variant="body1">
-                    You haven't added any posts to your favorites yet.
-                  </EmptyMessage>
-                ) : (
-                  favoritePosts.map((post) => (
-                    <Post 
-                      key={post.id} 
-                      post={post} 
-                      onFavoriteToggle={handleLocalFavoriteToggle}
-                      isFavorite={true}
-                    />
-                  ))
-                )}
-              </FavoritesList>
-              <Box p={1} textAlign="center">
-                <Typography variant="caption" color="textSecondary">
-                  MuSeek
-                </Typography>
-              </Box>
-            </FavoritesContainer>
-          </ContentContainer>
-        </PageContainer>
-      </ThemeProvider>
-    );
-  }
-  
-  export default Favorites;
+      onFavoriteToggle(postId, isFavorite);
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+    }
+  };
+
+  return (
+    <ThemeProvider theme={theme}>
+      <PageContainer>
+        <Topbar />
+        <ContentContainer>
+          <FavoritesContainer>
+            <FavoritesHeader>
+              <Typography variant="h6">Favorite Posts</Typography>
+            </FavoritesHeader>
+            <FavoritesList>
+              {loading ? (
+                <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+                  <CircularProgress />
+                </Box>
+              ) : error ? (
+                <EmptyMessage variant="body1" color="error">
+                  {error}
+                </EmptyMessage>
+              ) : favoritePosts.length === 0 ? (
+                <EmptyMessage variant="body1">
+                  You haven't added any posts to your favorites yet.
+                </EmptyMessage>
+              ) : (
+                favoritePosts.map((post) => (
+                  <Post 
+                    key={post.id} 
+                    post={post} 
+                    onFavoriteToggle={handleLocalFavoriteToggle}
+                    isFavorite={true}
+                  />
+                ))
+              )}
+            </FavoritesList>
+            <Box p={1} textAlign="center">
+              <Typography variant="caption" color="textSecondary">
+                MuSeek
+              </Typography>
+            </Box>
+          </FavoritesContainer>
+        </ContentContainer>
+      </PageContainer>
+    </ThemeProvider>
+  );
+}
+
+export default Favorites;
