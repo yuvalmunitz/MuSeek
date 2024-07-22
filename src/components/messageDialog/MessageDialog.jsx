@@ -13,9 +13,13 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/system';
 import CloseIcon from '@mui/icons-material/Close';
+import DeleteIcon from '@mui/icons-material/Delete';
+import EmailIcon from '@mui/icons-material/Email';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
+import { deleteDoc, doc } from 'firebase/firestore';
+import { db } from '../../firebase-config';
 
 const DialogContainer = styled(Dialog)(({ theme }) => ({
   '& .MuiDialog-paper': {
@@ -41,7 +45,7 @@ const DialogBody = styled(DialogContent)(({ theme }) => ({
 
 const DialogFooter = styled(DialogActions)(({ theme }) => ({
   padding: theme.spacing(2),
-  justifyContent: 'flex-end',
+  justifyContent: 'space-between',
 }));
 
 const CloseButton = styled(IconButton)(({ theme }) => ({
@@ -58,55 +62,80 @@ const StyledButton = styled(Button)({
 
 const AudioPlayerContainer = styled(Box)({
   display: 'flex',
+  flexDirection: 'column',
   alignItems: 'center',
   marginTop: '20px',
 });
 
-const PdfViewer = styled('object')({
+const PdfViewer = styled('iframe')({
   width: '100%',
   height: '500px',
+  border: 'none',
   marginTop: '10px',
 });
 
-export default function MessageDialog({ open, onClose, notification }) {
+export default function MessageDialog({ open, onClose, notification, onDelete }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [showPdfViewer, setShowPdfViewer] = useState(false);
-  const audioRef = useRef(new Audio());
+  const [fileType, setFileType] = useState(null);
+  const audioRef = useRef(null);
 
   useEffect(() => {
     if (notification && notification.fileUrl) {
-      audioRef.current.src = notification.fileUrl;
-      audioRef.current.addEventListener('loadedmetadata', handleLoadedMetadata);
-      audioRef.current.addEventListener('timeupdate', handleTimeUpdate);
-      audioRef.current.addEventListener('ended', handleEnded);
+      const url = notification.fileUrl;
+      console.log("File URL:", url);  // Debugging line
+
+      // Determine file type
+      if (url.includes('.mp3') || url.includes('.hb3') || url.includes('.wav') || url.includes('.ogg')) {
+        setFileType('audio');
+      } else if (url.includes('.pdf')) {
+        setFileType('pdf');
+      } else {
+        setFileType('unknown');
+      }
+
+      if (fileType === 'audio') {
+        audioRef.current = new Audio(url);
+        audioRef.current.addEventListener('loadedmetadata', handleLoadedMetadata);
+        audioRef.current.addEventListener('timeupdate', handleTimeUpdate);
+        audioRef.current.addEventListener('ended', handleEnded);
+      }
     }
 
     return () => {
-      audioRef.current.removeEventListener('loadedmetadata', handleLoadedMetadata);
-      audioRef.current.removeEventListener('timeupdate', handleTimeUpdate);
-      audioRef.current.removeEventListener('ended', handleEnded);
-      audioRef.current.pause();
-      setIsPlaying(false);
+      if (audioRef.current) {
+        audioRef.current.removeEventListener('loadedmetadata', handleLoadedMetadata);
+        audioRef.current.removeEventListener('timeupdate', handleTimeUpdate);
+        audioRef.current.removeEventListener('ended', handleEnded);
+        audioRef.current.pause();
+        setIsPlaying(false);
+      }
     };
-  }, [notification]);
+  }, [notification, fileType]);
 
   const handlePlayPause = () => {
-    if (isPlaying) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.play();
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
     }
-    setIsPlaying(!isPlaying);
   };
 
   const handleTimeUpdate = () => {
-    setCurrentTime(audioRef.current.currentTime);
+    if (audioRef.current) {
+      setCurrentTime(audioRef.current.currentTime);
+    }
   };
 
   const handleLoadedMetadata = () => {
-    setDuration(audioRef.current.duration);
+    if (audioRef.current) {
+      setDuration(audioRef.current.duration);
+    }
   };
 
   const handleEnded = () => {
@@ -124,76 +153,89 @@ export default function MessageDialog({ open, onClose, notification }) {
     setShowPdfViewer(!showPdfViewer);
   };
 
-  const renderFileAttachment = () => {
-    if (!notification || !notification.fileUrl) return null;
-
-    const fileExtension = notification.fileUrl.split('.').pop().split('?')[0].toLowerCase();
-    const isAudio = fileExtension === 'mp3' || fileExtension === 'hb3';
-    const isPdf = fileExtension === 'pdf';
-
-    if (isAudio) {
-      return (
-        <AudioPlayerContainer>
-          <IconButton onClick={handlePlayPause} size="large">
-            {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
-          </IconButton>
-          <Typography variant="body2" sx={{ ml: 2, color: '#3e2723' }}>
-            {formatTime(currentTime)} / {formatTime(duration)}
-          </Typography>
-        </AudioPlayerContainer>
-      );
-    } else if (isPdf) {
-      return (
-        <Box mt={2}>
-          <Button
-            startIcon={<PictureAsPdfIcon />}
-            onClick={handlePdfToggle}
-          >
-            {showPdfViewer ? 'Hide PDF' : 'View PDF'}
-          </Button>
-          {showPdfViewer && (
-            <PdfViewer data={notification.fileUrl} type="application/pdf">
-              <Typography>
-                It appears your browser doesn't support embedded PDFs. 
-                You can <Link href={notification.fileUrl} target="_blank" rel="noopener noreferrer">download the PDF</Link> to view it.
-              </Typography>
-            </PdfViewer>
-          )}
-        </Box>
-      );
+  const handleDelete = async () => {
+    try {
+      await deleteDoc(doc(db, 'posts', notification.postId, 'comments', notification.id));
+      onDelete(notification.id);
+      onClose();
+    } catch (error) {
+      console.error("Error deleting comment: ", error);
     }
-    return null;
+  };
+
+  const handleMailTo = () => {
+    window.location.href = `mailto:${notification.user?.email || ''}?subject=Re: ${notification.type}`;
   };
 
   if (!notification) return null;
 
+  console.log("Notification:", notification);  // Debugging line
+  console.log("File type:", fileType);  // Debugging line
+
   return (
-    <DialogContainer open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogHeader>
-        <Typography variant="h6">{notification.type}</Typography>
-        <CloseButton aria-label="close" onClick={onClose}>
-          <CloseIcon />
-        </CloseButton>
-      </DialogHeader>
-      <DialogBody>
-        <Typography variant="subtitle1" gutterBottom>
-          From: {notification.user.name}
-        </Typography>
-        <DialogContentText color="textPrimary">
-          {notification.content}
-        </DialogContentText>
-        {renderFileAttachment()}
-        <Box mt={2}>
-          <Typography variant="caption" color="textSecondary">
-            {new Date(notification.timestamp).toLocaleString()}
+      <DialogContainer open={open} onClose={onClose} maxWidth="md" fullWidth>
+        <DialogHeader>
+          {notification.type}
+          <CloseButton aria-label="close" onClick={onClose}>
+            <CloseIcon />
+          </CloseButton>
+        </DialogHeader>
+        <DialogBody>
+          <Typography variant="subtitle1" gutterBottom>
+            From: {notification.user?.name || 'Unknown User'}
           </Typography>
-        </Box>
-      </DialogBody>
-      <DialogFooter>
-        <StyledButton onClick={onClose} variant="contained">
-          Close
-        </StyledButton>
-      </DialogFooter>
-    </DialogContainer>
+          <DialogContentText color="textPrimary">
+            {notification.content}
+          </DialogContentText>
+          {fileType === 'audio' && (
+              <AudioPlayerContainer>
+                <StyledButton onClick={handlePlayPause} variant="contained" startIcon={isPlaying ? <PauseIcon /> : <PlayArrowIcon />}>
+                  {isPlaying ? 'Pause' : 'Play'} Audio
+                </StyledButton>
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                  {formatTime(currentTime)} / {formatTime(duration)}
+                </Typography>
+              </AudioPlayerContainer>
+          )}
+          {fileType === 'pdf' && (
+              <Box mt={2}>
+                <StyledButton onClick={handlePdfToggle} variant="contained" startIcon={<PictureAsPdfIcon />}>
+                  {showPdfViewer ? 'Hide PDF' : 'View PDF'}
+                </StyledButton>
+                {showPdfViewer && (
+                    <PdfViewer
+                        src={notification.fileUrl}
+                        title="PDF Viewer"
+                    />
+                )}
+              </Box>
+          )}
+          {fileType === 'unknown' && notification.fileUrl && (
+              <Box mt={2}>
+                <Typography variant="body2">
+                  Unrecognized file type. <Link href={notification.fileUrl} target="_blank" rel="noopener noreferrer">Click here to download</Link>
+                </Typography>
+              </Box>
+          )}
+          <Box mt={2}>
+            <Typography variant="caption" color="textSecondary">
+              {notification.timestamp ? new Date(notification.timestamp.seconds * 1000).toLocaleString() : 'Unknown date'}
+            </Typography>
+          </Box>
+        </DialogBody>
+        <DialogFooter>
+          <Box>
+            <IconButton onClick={handleDelete} color="error">
+              <DeleteIcon />
+            </IconButton>
+            <IconButton onClick={handleMailTo} color="primary">
+              <EmailIcon />
+            </IconButton>
+          </Box>
+          <StyledButton onClick={onClose}>
+            Close
+          </StyledButton>
+        </DialogFooter>
+      </DialogContainer>
   );
 }

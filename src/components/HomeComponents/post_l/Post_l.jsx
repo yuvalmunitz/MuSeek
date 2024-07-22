@@ -1,18 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { Star, StarBorder, ChatBubbleOutline, PlayArrow, Pause, PictureAsPdf } from '@mui/icons-material';
-import { IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button, Slider } from '@mui/material';
+import { IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button, Slider, List, ListItem, ListItemText, ListItemAvatar, Avatar, Typography } from '@mui/material';
 import AlertDialogSlide from '../alertDialogSlide/AlertDialogSlide';
 import ReactionDialog from '../reactionDialog/ReactionDialog';
 import { useAuth } from '../../../firestore/AuthContext';
+import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { db } from '../../../firebase-config';
 
-// Define styled components
 const PostContainer = styled.div`
   width: 100%;
   border-radius: 10px;
   box-shadow: 0px 0px 16px -8px rgba(0, 0, 0, 0.68);
   margin: 30px 0;
-  background-color: #e0dcd2; 
+  background-color: #e0dcd2;
 `;
 
 const PostWrapper = styled.div`
@@ -34,12 +35,12 @@ const PostUsername = styled.span`
   font-size: 15px;
   font-weight: 500;
   margin: 0 10px;
-  color: #3e2723; /* Dark brown text */
+  color: #3e2723;
 `;
 
 const PostDate = styled.span`
   font-size: 12px;
-  color: #6d4c41; /* Medium brown text */
+  color: #6d4c41;
 `;
 
 const PostTopRight = styled.div`
@@ -54,14 +55,7 @@ const PostCenter = styled.div`
 const PostText = styled.span`
   display: block;
   margin-bottom: 10px;
-  color: #000; /* Black text */
-`;
-
-const ReadMoreContainer = styled.div`
-  display: flex;
-  align-items: center;
-  color: #6d4c41; 
-  cursor: pointer;
+  color: #000;
 `;
 
 const AudioPlayerContainer = styled.div`
@@ -73,36 +67,15 @@ const AudioPlayerContainer = styled.div`
 const StyledSlider = styled(Slider)({
   color: '#6d4c41',
   '& .MuiSlider-thumb': {
-    backgroundColor: '#6d4c41',
+    backgroundColor: '#5d4037',
   },
   '& .MuiSlider-track': {
-    backgroundColor: '#6d4c41',
+    backgroundColor: '#5d4037',
   },
   '& .MuiSlider-rail': {
-    backgroundColor: '#6d4c41',
+    backgroundColor: '#d7ccc8',
   },
 });
-
-
-const FileButton = styled(Button)`
-  && {
-    color: #5d4037;
-    margin-right: 10px;
-    }
-`;
-
-const StyledDialog = styled(Dialog)`
-  .MuiDialogTitle-root {
-    background-color: #6d4c41;
-    color: white;
-  }
-  .MuiDialogContent-root {
-    padding: 24px;
-  }
-  .MuiDialogActions-root {
-    padding: 16px;
-  }
-`;
 
 const PostProfileImg = styled.img`
   width: 32px;
@@ -111,8 +84,20 @@ const PostProfileImg = styled.img`
   object-fit: cover;
 `;
 
-const AudioPlayer = styled.audio`
-  display: none;
+const CommentSection = styled.div`
+  margin-top: 20px;
+  padding: 10px;
+  background-color: #f5f5f5;
+  border-radius: 10px;
+`;
+
+const CommentButton = styled(Button)`
+  background-color: #6d4c41;
+  color: white;
+  margin-bottom: 10px;
+  &:hover {
+    background-color: #5d4037;
+  }
 `;
 
 function Post({ post, onFavoriteToggle, isFavorite }) {
@@ -125,6 +110,8 @@ function Post({ post, onFavoriteToggle, isFavorite }) {
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
   const [imgError, setImgError] = useState(false);
   const audioRef = useRef(null);
+  const [comments, setComments] = useState([]);
+  const [showComments, setShowComments] = useState(false);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -140,6 +127,23 @@ function Post({ post, onFavoriteToggle, isFavorite }) {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (showComments) {
+      const commentsRef = collection(db, "posts", post.id, "comments");
+      const q = query(commentsRef, orderBy("createdAt", "desc"));
+
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const commentList = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setComments(commentList);
+      });
+
+      return () => unsubscribe();
+    }
+  }, [post.id, showComments]);
 
   const handleFavoriteToggle = () => {
     onFavoriteToggle(post.id, !isFavorite);
@@ -199,83 +203,114 @@ function Post({ post, onFavoriteToggle, isFavorite }) {
     return 'Unknown date';
   };
 
+  const handleToggleComments = () => {
+    setShowComments(!showComments);
+  };
+
   return (
-    <PostContainer>
-      <PostWrapper>
-        <PostTop>
-          <PostTopLeft>
-            <PostProfileImg
-              src={post.userPhotoURL || 'https://example.com/default-avatar.png'}
-              alt={post.username}
-              onError={() => setImgError(true)}
-            />
-            <PostUsername>{post.username}</PostUsername>
-            <PostDate>{formatDate(post.date)}</PostDate>
-          </PostTopLeft>
-          <PostTopRight>
-            <IconButton onClick={handleFavoriteToggle}>
-              {isFavorite ? <Star htmlColor="#6d4c41" /> : <StarBorder htmlColor="#6d4c41" />}
-            </IconButton>
-            <IconButton onClick={() => setReactionDialogOpen(true)}>
-              <ChatBubbleOutline htmlColor="#6d4c41" />
-            </IconButton>
-          </PostTopRight>
-        </PostTop>
-        <PostCenter>
-          <PostText>{post.desc}</PostText>
-          {post.pdf && (
-            <FileButton onClick={() => setPdfDialogOpen(true)} startIcon={<PictureAsPdf />}>
-            View PDF
-          </FileButton>
-          )}
-          {post.audio && (
-            <AudioPlayerContainer>
-              <audio ref={audioRef} src={post.audio} />
-              <IconButton onClick={handlePlayPause}>
-                {isPlaying ? <Pause htmlColor="#6d4c41" /> : <PlayArrow htmlColor="#6d4c41" />}
-              </IconButton>
-              <StyledSlider
-                value={currentTime}
-                max={duration}
-                onChange={handleSliderChange}
-                aria-labelledby="continuous-slider"
+      <PostContainer>
+        <PostWrapper>
+          <PostTop>
+            <PostTopLeft>
+              <PostProfileImg
+                  src={post.userPhotoURL || 'https://example.com/default-avatar.png'}
+                  alt={post.username}
+                  onError={handleImageError}
               />
-              <span>{formatTime(currentTime)} / {formatTime(duration)}</span>
-            </AudioPlayerContainer>
+              <PostUsername>{post.username}</PostUsername>
+              <PostDate>{formatDate(post.date)}</PostDate>
+            </PostTopLeft>
+            <PostTopRight>
+              <IconButton onClick={handleFavoriteToggle}>
+                {isFavorite ? <Star htmlColor="#6d4c41" /> : <StarBorder htmlColor="#6d4c41" />}
+              </IconButton>
+              <IconButton onClick={handleToggleComments}>
+                <ChatBubbleOutline htmlColor="#6d4c41" />
+              </IconButton>
+            </PostTopRight>
+          </PostTop>
+          <PostCenter>
+            <PostText>{post.desc}</PostText>
+            {post.pdf && (
+                <Button onClick={() => setPdfDialogOpen(true)} startIcon={<PictureAsPdf />}>
+                  View PDF
+                </Button>
+            )}
+            {post.audio && (
+                <AudioPlayerContainer>
+                  <audio ref={audioRef} src={post.audio} />
+                  <IconButton onClick={handlePlayPause}>
+                    {isPlaying ? <Pause htmlColor="#6d4c41" /> : <PlayArrow htmlColor="#6d4c41" />}
+                  </IconButton>
+                  <StyledSlider
+                      value={currentTime}
+                      max={duration}
+                      onChange={handleSliderChange}
+                      aria-labelledby="continuous-slider"
+                  />
+                  <span>{formatTime(currentTime)} / {formatTime(duration)}</span>
+                </AudioPlayerContainer>
+            )}
+          </PostCenter>
+          {showComments && (
+              <CommentSection>
+                <CommentButton onClick={() => setReactionDialogOpen(true)}>
+                  Add Comment
+                </CommentButton>
+                <List>
+                  {comments.map((comment) => (
+                      <ListItem key={comment.id}>
+                        <ListItemAvatar>
+                          <Avatar src={comment.userPhotoURL} />
+                        </ListItemAvatar>
+                        <ListItemText
+                            primary={comment.title}
+                            secondary={
+                              <>
+                                <Typography component="span" variant="body2" color="textPrimary">
+                                  {comment.username}
+                                </Typography>
+                                {" — "}{comment.text}
+                              </>
+                            }
+                        />
+                      </ListItem>
+                  ))}
+                </List>
+              </CommentSection>
           )}
-        </PostCenter>
-      </PostWrapper>
-      <AlertDialogSlide open={dialogOpen} handleClose={() => setDialogOpen(false)} />
-      <ReactionDialog
-        open={reactionDialogOpen}
-        onClose={() => setReactionDialogOpen(false)}
-        onSend={(reaction) => console.log('Reaction sent:', reaction)}
-      />
-      <Dialog
-        open={pdfDialogOpen}
-        onClose={() => setPdfDialogOpen(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>PDF Viewer</DialogTitle>
-        <DialogContent>
-          {post.pdf && (
-            <iframe 
-              src={post.pdf}
-              width="100%" 
-              height="600px" 
-              style={{ border: 'none' }}
-              title="PDF Viewer"
-            />
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setPdfDialogOpen(false)} color="primary">
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </PostContainer>
+        </PostWrapper>
+        <AlertDialogSlide open={dialogOpen} handleClose={() => setDialogOpen(false)} />
+        <ReactionDialog
+            open={reactionDialogOpen}
+            onClose={() => setReactionDialogOpen(false)}
+            postId={post.id}
+        />
+        <Dialog
+            open={pdfDialogOpen}
+            onClose={() => setPdfDialogOpen(false)}
+            maxWidth="md"
+            fullWidth
+        >
+          <DialogTitle>PDF Viewer</DialogTitle>
+          <DialogContent>
+            {post.pdf && (
+                <iframe
+                    src={post.pdf}
+                    width="100%"
+                    height="600px"
+                    style={{ border: 'none' }}
+                    title="PDF Viewer"
+                />
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setPdfDialogOpen(false)} color="primary">
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </PostContainer>
   );
 }
 
