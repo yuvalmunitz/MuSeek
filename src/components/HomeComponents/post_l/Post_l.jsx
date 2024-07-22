@@ -83,12 +83,14 @@ const StyledSlider = styled(Slider)({
   },
 });
 
+
 const FileButton = styled(Button)`
-  background-color: #6d4c41;
-  color: white;
-  margin-right: 10px;
-  &:hover {
-    background-color: #5d4037;
+  && {
+    color: #5d4037;
+    margin-right: 10px;
+    &:hover {
+      background-color: #5d4037;
+    }
   }
 `;
 
@@ -104,6 +106,7 @@ const StyledDialog = styled(Dialog)`
     padding: 16px;
   }
 `;
+
 const PostProfileImg = styled.img`
   width: 32px;
   height: 32px;
@@ -144,7 +147,6 @@ function Post({ post, onFavoriteToggle, isFavorite }) {
   const handleFavoriteToggle = () => {
     onFavoriteToggle(post.id, !isFavorite);
   };
-
 
   const handlePlayPause = () => {
     if (audioRef.current) {
@@ -200,7 +202,6 @@ function Post({ post, onFavoriteToggle, isFavorite }) {
     return 'Unknown date';
   };
 
-
   return (
     <PostContainer>
       <PostWrapper>
@@ -226,9 +227,9 @@ function Post({ post, onFavoriteToggle, isFavorite }) {
         <PostCenter>
           <PostText>{post.desc}</PostText>
           {post.pdf && (
-            <Button onClick={() => setPdfDialogOpen(true)} startIcon={<PictureAsPdf />}>
-              View PDF
-            </Button>
+            <FileButton onClick={() => setPdfDialogOpen(true)} startIcon={<PictureAsPdf />}>
+            View PDF
+          </FileButton>
           )}
           {post.audio && (
             <AudioPlayerContainer>
@@ -236,7 +237,7 @@ function Post({ post, onFavoriteToggle, isFavorite }) {
               <IconButton onClick={handlePlayPause}>
                 {isPlaying ? <Pause htmlColor="#6d4c41" /> : <PlayArrow htmlColor="#6d4c41" />}
               </IconButton>
-              <Slider
+              <StyledSlider
                 value={currentTime}
                 max={duration}
                 onChange={handleSliderChange}
