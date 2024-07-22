@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+// 
+
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 import Post from "../post_l/Post_l";
 import Share from "../share/Share";
@@ -31,29 +33,18 @@ const Divider = styled.div`
 
 function Feed({ onFavoriteToggle, favorites, sortType, selectedGenre }) {
   const [posts, setPosts] = useState([]);
-  const [sortedPosts, setSortedPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { currentUser } = useAuth();
 
-  useEffect(() => {
-    if (currentUser) {
-      fetchPosts();
-    }
-  }, [currentUser, favorites]);
-
-  useEffect(() => {
-    sortPosts();
-  }, [sortType, posts, selectedGenre]);
-
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     try {
       setLoading(true);
       const postsCollection = collection(db, "posts");
       const q = query(postsCollection, orderBy("date", "desc"));
       const querySnapshot = await getDocs(q);
 
-      let fetchedPosts = querySnapshot.docs.map(doc => {
+      const fetchedPosts = querySnapshot.docs.map(doc => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -69,13 +60,15 @@ function Feed({ onFavoriteToggle, favorites, sortType, selectedGenre }) {
       setError("Failed to load posts. Please try again later.");
       setLoading(false);
     }
-  };
+  }, []);
 
-  const handleNewPost = (newPost) => {
-    setPosts(prevPosts => [newPost, ...prevPosts]);
-  };
+  useEffect(() => {
+    if (currentUser) {
+      fetchPosts();
+    }
+  }, [currentUser, fetchPosts]);
 
-  const sortPosts = () => {
+  const sortedPosts = useMemo(() => {
     let filtered = posts;
 
     // Filter by selected genre
@@ -83,16 +76,19 @@ function Feed({ onFavoriteToggle, favorites, sortType, selectedGenre }) {
       filtered = filtered.filter(post => post.genre === selectedGenre);
     }
 
-    let sorted = [];
+    // Sort by type
     if (sortType === 'lyrics') {
-      sorted = filtered.filter(post => post.pdf != null);
+      return filtered.filter(post => post.pdf != null);
     } else if (sortType === 'composition') {
-      sorted = filtered.filter(post => post.audio != null);
+      return filtered.filter(post => post.audio != null);
     } else {
-      sorted = filtered;
+      return filtered;
     }
-    setSortedPosts(sorted);
-  };
+  }, [posts, sortType, selectedGenre]);
+
+  const handleNewPost = useCallback((newPost) => {
+    setPosts(prevPosts => [newPost, ...prevPosts]);
+  }, []);
 
   if (loading) {
     return <div>Loading posts...</div>;
