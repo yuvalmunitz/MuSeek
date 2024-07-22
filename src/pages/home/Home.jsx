@@ -13,7 +13,7 @@ const HomeContainer = styled.div`
   flex-direction: column;
   width: 100%;
   height: 100vh;
-  background-color: #d2b48c; /* Light brown background */
+  background-color: #f5f5f5; 
 `;
 
 const ContentContainer = styled.div`
