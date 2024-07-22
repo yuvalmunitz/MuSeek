@@ -133,10 +133,10 @@ export default function Topbar() {
         <Logo>MuSeek</Logo>
       </TopbarLeft>
       <TopbarCenter>
-        <Searchbar>
+        {/* <Searchbar>
           <SearchIcon />
           <SearchInput placeholder="Search for a user or a keyword" />
-        </Searchbar>
+        </Searchbar>/ */}
       </TopbarCenter>
       <TopbarRight>
         <StyledButton onClick={handleNavigation}>
