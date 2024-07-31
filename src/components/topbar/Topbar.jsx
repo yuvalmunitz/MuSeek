@@ -113,7 +113,7 @@ export default function Topbar() {
 
   const handleNavigation = () => {
     if (location.pathname === '/Home') {
-      navigate('/Profile');
+      navigate('/Home');
     } else {
       navigate('/Home');
     }
