@@ -225,10 +225,10 @@ export default function MessageDialog({ open, onClose, notification, onDelete })
         </DialogBody>
         <DialogFooter>
           <Box>
-            <IconButton onClick={handleDelete} color="error">
+            <IconButton onClick={handleDelete} sx={{color: '#6d4c41'}}>
               <DeleteIcon />
             </IconButton>
-            <IconButton onClick={handleMailTo} color="primary">
+            <IconButton onClick={handleMailTo} sx={{color: '#6d4c41'}}>
               <EmailIcon />
             </IconButton>
           </Box>

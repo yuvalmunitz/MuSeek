@@ -232,7 +232,7 @@ function Post({ post, onFavoriteToggle, isFavorite }) {
           <PostCenter>
             <PostText>{post.desc}</PostText>
             {post.pdf && (
-                <Button onClick={() => setPdfDialogOpen(true)} startIcon={<PictureAsPdf />}>
+                <Button  onClick={() => setPdfDialogOpen(true)} startIcon={<PictureAsPdf htmlColor="#6d4c41" />} sx={{color: '#6d4c41'}}>
                   View PDF
                 </Button>
             )}
@@ -254,7 +254,7 @@ function Post({ post, onFavoriteToggle, isFavorite }) {
           </PostCenter>
           {showComments && (
               <CommentSection>
-                <CommentButton onClick={() => setReactionDialogOpen(true)}>
+                <CommentButton sx={{color: '#6d4c41'}} onClick={() => setReactionDialogOpen(true)}>
                   Add Comment
                 </CommentButton>
                 <List>
@@ -305,7 +305,7 @@ function Post({ post, onFavoriteToggle, isFavorite }) {
             )}
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setPdfDialogOpen(false)} color="primary">
+            <Button onClick={() => setPdfDialogOpen(false)} sx={{color: '#6d4c41'}}>
               Close
             </Button>
           </DialogActions>
