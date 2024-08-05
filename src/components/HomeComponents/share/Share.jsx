@@ -555,7 +555,7 @@ const ShareOption = styled.div`
   flex-direction: column;
   align-items: flex-start;
   margin-right: 15px;
-  cursor: pointer;
+  position: relative;
 `;
 
 const ShareButton = styled(Button)`
@@ -635,9 +635,15 @@ const CloseButton = styled(IconButton)`
 `;
 
 const FileNameDisplay = styled.div`
-  margin-top: 5px;
+  position: absolute;
+  top: -20px;
+  left: 0;
   font-size: 0.8rem;
   color: #3e2723;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 `;
 
 const genres = ["Rock", "Pop", "Jazz", "Classical", "Hip Hop", "Electronic", "Country", "R&B", "Folk", "Metal"];
@@ -899,63 +905,7 @@ export default function Share({ onPostAdded }) {
             {errorMessage}
           </Alert>
         )}
-        {/* {audioUrl && (
-          <AudioPlayerContainer>
-            <StyledButton onClick={handlePlayPause} variant="contained">
-              {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
-            </StyledButton>
-            <StyledSlider
-              value={currentTime}
-              max={duration}
-              onChange={handleSliderChange}
-              aria-labelledby="continuous-slider"
-              sx={{ width: '80%', mt: 2 }}
-            />
-            <Typography variant="body2" sx={{ color: '#3e2723', mt: 1 }}>
-              {formatTime(currentTime)} / {formatTime(duration)}
-            </Typography>
-          </AudioPlayerContainer>
-        )} */}
       </ShareWrapper>
-      {/* <StyledDialog
-        open={pdfDialogOpen}
-        onClose={handleClosePdfDialog}
-        maxWidth="md"
-        fullWidth
-        aria-labelledby="pdf-dialog-title"
-      > */}
-        {/* <DialogTitle id="pdf-dialog-title">
-          PDF Viewer
-          <CloseButton
-            aria-label="close"
-            onClick={handleClosePdfDialog}
-          >
-            <CloseIcon />
-          </CloseButton>
-        </DialogTitle> */}
-        {/* <DialogContent dividers>
-          {pdfFile ? (
-            <PDFContainer>
-              <iframe
-                src={pdfUrl}
-                width="100%"
-                height="600px"
-                style={{ border: 'none' }}
-                title="PDF Viewer"
-              />
-            </PDFContainer>
-          ) : (
-            <div style={{ marginTop: '16px', color: '#6d4c41' }}>
-              No PDF uploaded yet.
-            </div>
-          )}
-        </DialogContent> */}
-        {/* <DialogActions>
-          <Button onClick={handleClosePdfDialog} style={{ backgroundColor: '#6d4c41', color: 'white' }}>
-            Add
-          </Button>
-        </DialogActions> */}
-      {/* </StyledDialog> */}
     </ShareContainer>
   );
 }
