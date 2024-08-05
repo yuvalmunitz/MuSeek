@@ -10,6 +10,9 @@ import { useAuth } from '../../firestore/AuthContext';
 import { addFavorite, removeFavorite, getUserFavorites } from '../../firestore/users';
 import ScrollUpButton from '../../components/HomeComponents/scrollUp/ScrollUpButton';
 import { Star } from '@mui/icons-material';
+import GenreButton from '../../components/GenreButton/GenreButton';
+import MusicNoteIcon from '@mui/icons-material/MusicNote';
+import NotesIcon from '@mui/icons-material/Notes';
 
 const HomeContainer = styled.div`
   display: flex;
@@ -91,6 +94,12 @@ const Button = styled.button`
   }
 `;
 
+const GenreButtonsContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+`;
+
 function Home() {
   const { currentUser } = useAuth();
   const [favorites, setFavorites] = useState([]);
@@ -141,15 +150,15 @@ function Home() {
         <ContentContainer>
           <MainContent>
             <Routes>
-              <Route 
-                path="/" 
+              <Route
+                path="/"
                 element={
                   <>
-                    <Feed 
-                      onFavoriteToggle={handleFavoriteToggle} 
-                      favorites={favorites} 
-                      sortType={sortType} 
-                      selectedGenre={selectedGenre} 
+                    <Feed
+                      onFavoriteToggle={handleFavoriteToggle}
+                      favorites={favorites}
+                      sortType={sortType}
+                      selectedGenre={selectedGenre}
                     />
                     <RightbarContainer>
                       <FavoritesButton onClick={handleFavoritesClick}>
@@ -158,20 +167,32 @@ function Home() {
                       </FavoritesButton>
                       <FilterSection>
                         <FilterTitle>Sort By</FilterTitle>
-                        <Button onClick={() => setSortType('all')} selected={sortType === 'all'}>All Posts</Button>
-                        <Button onClick={() => setSortType('lyrics')} selected={sortType === 'lyrics'}>Lyrics Posts</Button>
-                        <Button onClick={() => setSortType('composition')} selected={sortType === 'composition'}>Composition Posts</Button>
+                        <GenreButtonsContainer>
+                        <Button onClick={() => setSortType('all')} selected={sortType === 'all'}>
+                          All Posts
+                        </Button>
+                        <Button onClick={() => setSortType('lyrics')} selected={sortType === 'lyrics'}>
+                          <NotesIcon />
+                          Lyrics Posts
+                        </Button>
+                        <Button onClick={() => setSortType('composition')} selected={sortType === 'composition'}>
+                          <MusicNoteIcon />
+                          Composition Posts
+                        </Button>
+                        </GenreButtonsContainer>
                       </FilterSection>
                       <FilterSection>
                         <FilterTitle>Genres</FilterTitle>
-                        <Button onClick={() => setSelectedGenre('all')} selected={selectedGenre === 'all'}>All Genres</Button>
-                        {allowedGenres.map(genre => (
-                          <Button key={genre} onClick={() => setSelectedGenre(genre)} selected={selectedGenre === genre}>{genre}</Button>
-                        ))}
+                        <GenreButtonsContainer>
+                          <GenreButton onClick={() => setSelectedGenre('all')} selected={selectedGenre === 'all'} genre="All Genres" />
+                          {allowedGenres.map(genre => (
+                              <GenreButton key={genre} onClick={() => setSelectedGenre(genre)} selected={selectedGenre === genre} genre={genre} />
+                          ))}
+                        </GenreButtonsContainer>
                       </FilterSection>
                     </RightbarContainer>
                   </>
-                } 
+                }
               />
               <Route path="/favorites" element={<Favorites onFavoriteToggle={handleFavoriteToggle} />} />
             </Routes>

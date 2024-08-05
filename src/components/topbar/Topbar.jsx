@@ -112,11 +112,7 @@ export default function Topbar() {
   const [imgError, setImgError] = useState(false);
 
   const handleNavigation = () => {
-    if (location.pathname === '/Home') {
-      navigate('/Home');
-    } else {
-      navigate('/Home');
-    }
+    navigate('/Home');
   };
 
   const handleChatClick = () => {
@@ -132,33 +128,37 @@ export default function Topbar() {
   };
 
   return (
-    <TopbarContainer>
-      <TopbarLeft>
-        <Logo onClick={handleLogoClick}>MuSeek</Logo>
-      </TopbarLeft>
-      <TopbarCenter>
-        {/* <Searchbar>
+      <TopbarContainer>
+        <TopbarLeft>
+          <Logo onClick={handleLogoClick}>MuSeek</Logo>
+        </TopbarLeft>
+        <TopbarCenter>
+          {/* <Searchbar>
           <SearchIcon />
           <SearchInput placeholder="Search for a user or a keyword" />
         </Searchbar> */}
-      </TopbarCenter>
-      <TopbarRight>
-        <StyledButton onClick={handleNavigation}>
-          {location.pathname === '/Home' ? '' : 'Home'}
-        </StyledButton>
-        <TopbarIcons>
-          <TopbarIconItem onClick={handleChatClick}>
-            <Chat />
-          </TopbarIconItem>
-        </TopbarIcons>
-        {currentUser && (
-          <TopbarImg 
-            src={imgError ? 'https://example.com/default-avatar.png' : currentUser.photoURL} 
-            alt={currentUser.displayName}
-            onError={handleImageError}
-          />
-        )}
-      </TopbarRight>
-    </TopbarContainer>
+        </TopbarCenter>
+        <TopbarRight>
+          {location.pathname !== '/Home' && (
+              <StyledButton onClick={handleNavigation}>
+                Home
+              </StyledButton>
+          )}
+          {location.pathname !== '/Inbox' && (
+              <TopbarIcons>
+                <TopbarIconItem onClick={handleChatClick}>
+                  <Chat />
+                </TopbarIconItem>
+              </TopbarIcons>
+          )}
+          {currentUser && (
+              <TopbarImg
+                  src={imgError ? 'https://example.com/default-avatar.png' : currentUser.photoURL}
+                  alt={currentUser.displayName}
+                  onError={handleImageError}
+              />
+          )}
+        </TopbarRight>
+      </TopbarContainer>
   );
 }

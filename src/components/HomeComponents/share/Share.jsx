@@ -5,14 +5,15 @@ import NotesIcon from '@mui/icons-material/Notes';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 import CloseIcon from '@mui/icons-material/Close';
-import { 
-  Button, 
-  Slider, 
-  Typography, 
-  Dialog, 
-  DialogTitle, 
-  DialogContent, 
-  DialogActions, 
+import UnfoldMore from '@mui/icons-material/UnfoldMore';
+import {
+  Button,
+  Slider,
+  Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
   IconButton,
   Menu,
   MenuItem,
@@ -372,9 +373,10 @@ export default function Share({ onPostAdded }) {
             </ShareOption>
             <ShareOption>
               <Button
-                variant="contained"
-                onClick={handleMenuClick}
-                style={{ backgroundColor: '#6d4c41', color: 'white', marginRight: '10px' }}
+                  variant="contained"
+                  onClick={handleMenuClick}
+                  style={{ backgroundColor: '#6d4c41', color: 'white', marginRight: '10px' }}
+                  startIcon={<UnfoldMore />}
               >
                 {genre || 'Select Genre'}
               </Button>
@@ -444,10 +446,10 @@ export default function Share({ onPostAdded }) {
         <DialogContent dividers>
           {pdfFile ? (
             <PDFContainer>
-              <iframe 
-                src={pdfUrl} 
-                width="100%" 
-                height="600px" 
+              <iframe
+                src={pdfUrl}
+                width="100%"
+                height="600px"
                 style={{ border: 'none' }}
                 title="PDF Viewer"
               />
