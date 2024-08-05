@@ -270,7 +270,6 @@ function Post({ post, onFavoriteToggle, isFavorite }) {
                                 <Typography component="span" variant="body2" color="textPrimary">
                                   {comment.username}
                                 </Typography>
-                                {" — "}{comment.text}
                               </>
                             }
                         />
