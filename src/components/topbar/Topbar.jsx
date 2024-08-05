@@ -131,15 +131,9 @@ export default function Topbar() {
       <TopbarContainer>
         <TopbarLeft>
           <Logo onClick={handleLogoClick}>MuSeek</Logo>
-        </TopbarLeft>
-        <TopbarCenter>
-          {/* <Searchbar>
-          <SearchIcon />
-          <SearchInput placeholder="Search for a user or a keyword" />
-        </Searchbar> */}
-        </TopbarCenter>
+        </TopbarLeft>          
         <TopbarRight>
-          {location.pathname !== '/Home' && (
+          {location.pathname !== '/home' && (
               <StyledButton onClick={handleNavigation}>
                 Home
               </StyledButton>
