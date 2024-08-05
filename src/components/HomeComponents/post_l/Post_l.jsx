@@ -196,9 +196,21 @@ function Post({ post, onFavoriteToggle, isFavorite }) {
 
   const formatDate = (date) => {
     if (date instanceof Date) {
-      return date.toLocaleString();
+      return date.toLocaleString(undefined, { 
+        year: 'numeric', 
+        month: 'numeric', 
+        day: 'numeric', 
+        hour: '2-digit', 
+        minute: '2-digit'
+      });
     } else if (typeof date === 'string') {
-      return new Date(date).toLocaleString();
+      return new Date(date).toLocaleString(undefined, { 
+        year: 'numeric', 
+        month: 'numeric', 
+        day: 'numeric', 
+        hour: '2-digit', 
+        minute: '2-digit'
+      });
     }
     return 'Unknown date';
   };
