@@ -266,9 +266,11 @@ export default function InboxBase() {
                         </Avatar>
                       </ListItemAvatar>
                       <ListItemText
-                          primary={`${notification.type}: ${notification.username}`}
+                                    primary={`Title: ${notification.title}`}
                           secondary={
                             <React.Fragment>
+                              {`Author: ${notification.username}`}
+                              <br />
                               {formatDate(notification.createdAt)}
                               {notification.fileUrl && (
                                   <Box component="span" ml={1}>

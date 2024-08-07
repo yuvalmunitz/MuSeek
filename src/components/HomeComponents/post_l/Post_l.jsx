@@ -7,13 +7,16 @@ import ReactionDialog from '../reactionDialog/ReactionDialog';
 import { useAuth } from '../../../firestore/AuthContext';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../../../firebase-config';
+import ScrollUpButton from '../scrollUp/ScrollUpButton';
 
 const PostContainer = styled.div`
   width: 100%;
   border-radius: 10px;
-  box-shadow: 0px 0px 16px -8px rgba(0, 0, 0, 0.68);
+  box-shadow: 0 0 16px -8px rgba(0, 0, 0, 0.68);
   margin: 30px 0;
   background-color: #e0dcd2;
+  overflow-y: auto; /* Add scrolling */
+  max-height: 500px; /* Set a max height */
 `;
 
 const PostWrapper = styled.div`
@@ -196,19 +199,19 @@ function Post({ post, onFavoriteToggle, isFavorite }) {
 
   const formatDate = (date) => {
     if (date instanceof Date) {
-      return date.toLocaleString(undefined, { 
-        year: 'numeric', 
-        month: 'numeric', 
-        day: 'numeric', 
-        hour: '2-digit', 
+      return date.toLocaleString(undefined, {
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        hour: '2-digit',
         minute: '2-digit'
       });
     } else if (typeof date === 'string') {
-      return new Date(date).toLocaleString(undefined, { 
-        year: 'numeric', 
-        month: 'numeric', 
-        day: 'numeric', 
-        hour: '2-digit', 
+      return new Date(date).toLocaleString(undefined, {
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        hour: '2-digit',
         minute: '2-digit'
       });
     }
@@ -321,6 +324,7 @@ function Post({ post, onFavoriteToggle, isFavorite }) {
             </Button>
           </DialogActions>
         </Dialog>
+        <ScrollUpButton /> {/* Add ScrollUpButton */}
       </PostContainer>
   );
 }

@@ -9,19 +9,20 @@ import { useAuth } from '../../../firestore/AuthContext';
 // Styled Components
 const FeedContainer = styled.div`
   flex: 9;
-  background-color: transparent;
+  background-color: #f5f5f5; /* Light background for better contrast */
   padding: 20px;
-  overflow-y: auto;
-  ::-webkit-scrollbar {
-    display: none;
-  }
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  /* Remove scrolling properties */
 `;
 
 const FeedWrapper = styled.div`
   padding: 20px;
-  background-color: transparent;
+  background-color: #ffffff; /* White background for posts */
+  border-radius: 10px; /* Rounded corners */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+  transition: transform 0.3s ease-in-out;
+  &:hover {
+    transform: scale(1.01); /* Slightly enlarge on hover */
+  }
 `;
 
 const Divider = styled.div`
@@ -29,7 +30,21 @@ const Divider = styled.div`
   margin: 20px 0;
 `;
 
-function Feed({ onFavoriteToggle, favorites, sortType, selectedGenre }) {
+const LoadingMessage = styled.div`
+  text-align: center;
+  color: #6d4c41;
+  font-size: 1.2rem;
+  padding: 20px;
+`;
+
+const ErrorMessage = styled.div`
+  text-align: center;
+  color: red;
+  font-size: 1.2rem;
+  padding: 20px;
+`;
+
+function Feed({ onFavoriteToggle, favorites = [], sortType, selectedGenre }) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -89,29 +104,33 @@ function Feed({ onFavoriteToggle, favorites, sortType, selectedGenre }) {
   }, []);
 
   if (loading) {
-    return <div>Loading posts...</div>;
+    return <LoadingMessage>Loading posts...</LoadingMessage>;
   }
 
   if (error) {
-    return <div>{error}</div>;
+    return <ErrorMessage>{error}</ErrorMessage>;
   }
 
   return (
-    <FeedContainer>
-      <FeedWrapper>
-        <Share onPostAdded={handleNewPost} />
-        <Divider />
-        {sortedPosts.map((post) => (
-          <Post
-            key={post.id}
-            post={post}
-            onFavoriteToggle={onFavoriteToggle}
-            isFavorite={favorites.includes(post.id)}
-          />
-        ))}
-      </FeedWrapper>
-    </FeedContainer>
+      <FeedContainer>
+        <FeedWrapper>
+          <Share onPostAdded={handleNewPost} />
+          <Divider />
+          {sortedPosts.map((post) => (
+              <Post
+                  key={post.id}
+                  post={post}
+                  onFavoriteToggle={onFavoriteToggle}
+                  isFavorite={favorites.includes(post.id)}
+              />
+          ))}
+        </FeedWrapper>
+      </FeedContainer>
   );
 }
+
+Feed.defaultProps = {
+  favorites: [],
+};
 
 export default Feed;

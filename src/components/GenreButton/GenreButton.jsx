@@ -31,7 +31,7 @@ const GenreIcon = styled.div`
   margin-right: 8px;
 `;
 
-const genreIcons = {
+export const genreIcons = {
     "Rock": <Flare />,
     "Pop": <Speaker />,
     "Jazz": <MusicNoteIcon />,

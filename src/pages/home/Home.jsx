@@ -6,7 +6,6 @@ import Favorites from '../../components/HomeComponents/favorites/Favorites';
 import styled from 'styled-components';
 import { useAuth } from '../../firestore/AuthContext';
 import { addFavorite, removeFavorite, getUserFavorites } from '../../firestore/users';
-import ScrollUpButton from '../../components/HomeComponents/scrollUp/ScrollUpButton';
 import { Star } from '@mui/icons-material';
 import GenreButton from '../../components/GenreButton/GenreButton';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
@@ -202,7 +201,6 @@ function Home() {
               </Routes>
             </MainContent>
           </ContentContainer>
-          <ScrollUpButton />
         </HomeContainer>
       </>
   );

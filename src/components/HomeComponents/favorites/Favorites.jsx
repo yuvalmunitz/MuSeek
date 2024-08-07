@@ -11,7 +11,7 @@ import { db } from '../../../firebase-config';
 import { useAuth } from '../../../firestore/AuthContext';
 import Post from "../post_l/Post_l";
 import Topbar from "../../topbar/Topbar";
-import { removeFavorite } from '../../../firestore//users'; // Adjust the path as necessary
+import { removeFavorite } from '../../../firestore/users'; // Adjust the path as necessary
 
 const theme = createTheme({
   palette: {
@@ -21,6 +21,20 @@ const theme = createTheme({
     secondary: {
       main: '#6d4c41',
     },
+    background: {
+      default: '#f5f5f5',
+    },
+  },
+  typography: {
+    h6: {
+      fontWeight: 600,
+    },
+    body1: {
+      fontSize: '1rem',
+    },
+    caption: {
+      fontSize: '0.8rem',
+    },
   },
   shadows: ["none", ...Array(24).fill("0px 1px 3px rgba(0,0,0,0.2), 0px 1px 1px rgba(0,0,0,0.14), 0px 2px 1px rgba(0,0,0,0.12)")],
 });
@@ -29,7 +43,7 @@ const PageContainer = styled(Box)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
   minHeight: '100vh',
-  backgroundColor: '#e0dcd2',
+  backgroundColor: theme.palette.background.default,
 }));
 
 const ContentContainer = styled(Box)(({ theme }) => ({
@@ -47,19 +61,25 @@ const FavoritesContainer = styled(Paper)(({ theme }) => ({
   borderRadius: 10,
   overflow: 'hidden',
   boxShadow: theme.shadows[3],
-  backgroundColor: '#f5f5f5',
-  color: '#3e2723',
+  backgroundColor: theme.palette.background.paper,
+  color: theme.palette.text.primary,
   display: 'flex',
   flexDirection: 'column',
+  transition: 'transform 0.3s ease-in-out',
+  '&:hover': {
+    transform: 'scale(1.02)',
+  },
 }));
 
 const FavoritesHeader = styled(Box)(({ theme }) => ({
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
-  padding: theme.spacing(1),
-  backgroundColor: '#6d4c41',
+  padding: theme.spacing(2),
+  backgroundColor: theme.palette.primary.main,
   color: theme.palette.common.white,
+  borderTopLeftRadius: 10,
+  borderTopRightRadius: 10,
 }));
 
 const FavoritesList = styled(Box)(({ theme }) => ({
@@ -71,7 +91,7 @@ const FavoritesList = styled(Box)(({ theme }) => ({
 const EmptyMessage = styled(Typography)(({ theme }) => ({
   textAlign: 'center',
   padding: theme.spacing(2),
-  color: '#6d4c41',
+  color: theme.palette.primary.main,
 }));
 
 function Favorites({ onFavoriteToggle }) {
@@ -95,7 +115,7 @@ function Favorites({ onFavoriteToggle }) {
     setError(null);
     try {
       console.log("Fetching favorite posts for user:", currentUser.uid);
-      
+
       // Fetch user's favorites
       const userDoc = await getDoc(doc(db, "users", currentUser.uid));
       if (!userDoc.exists()) {
@@ -118,7 +138,7 @@ function Favorites({ onFavoriteToggle }) {
       const postsRef = collection(db, "posts");
       const q = query(postsRef, where("__name__", "in", favorites));
       const querySnapshot = await getDocs(q);
-      
+
       const posts = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
@@ -149,47 +169,47 @@ function Favorites({ onFavoriteToggle }) {
   };
 
   return (
-    <ThemeProvider theme={theme}>
-      <PageContainer>
-        <Topbar />
-        <ContentContainer>
-          <FavoritesContainer>
-            <FavoritesHeader>
-              <Typography variant="h6">Favorite Posts</Typography>
-            </FavoritesHeader>
-            <FavoritesList>
-              {loading ? (
-                <Box display="flex" justifyContent="center" alignItems="center" height="100%">
-                  <CircularProgress />
-                </Box>
-              ) : error ? (
-                <EmptyMessage variant="body1" color="error">
-                  {error}
-                </EmptyMessage>
-              ) : favoritePosts.length === 0 ? (
-                <EmptyMessage variant="body1">
-                  You haven't added any posts to your favorites yet.
-                </EmptyMessage>
-              ) : (
-                favoritePosts.map((post) => (
-                  <Post 
-                    key={post.id} 
-                    post={post} 
-                    onFavoriteToggle={handleLocalFavoriteToggle}
-                    isFavorite={true}
-                  />
-                ))
-              )}
-            </FavoritesList>
-            <Box p={1} textAlign="center">
-              <Typography variant="caption" color="textSecondary">
-                MuSeek
-              </Typography>
-            </Box>
-          </FavoritesContainer>
-        </ContentContainer>
-      </PageContainer>
-    </ThemeProvider>
+      <ThemeProvider theme={theme}>
+        <PageContainer>
+          <Topbar />
+          <ContentContainer>
+            <FavoritesContainer>
+              <FavoritesHeader>
+                <Typography variant="h6">Favorite Posts</Typography>
+              </FavoritesHeader>
+              <FavoritesList>
+                {loading ? (
+                    <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+                      <CircularProgress />
+                    </Box>
+                ) : error ? (
+                    <EmptyMessage variant="body1" color="error">
+                      {error}
+                    </EmptyMessage>
+                ) : favoritePosts.length === 0 ? (
+                    <EmptyMessage variant="body1">
+                      You haven't added any posts to your favorites yet.
+                    </EmptyMessage>
+                ) : (
+                    favoritePosts.map((post) => (
+                        <Post
+                            key={post.id}
+                            post={post}
+                            onFavoriteToggle={handleLocalFavoriteToggle}
+                            isFavorite={true}
+                        />
+                    ))
+                )}
+              </FavoritesList>
+              <Box p={1} textAlign="center">
+                <Typography variant="caption" color="textSecondary">
+                  MuSeek
+                </Typography>
+              </Box>
+            </FavoritesContainer>
+          </ContentContainer>
+        </PageContainer>
+      </ThemeProvider>
   );
 }
 
