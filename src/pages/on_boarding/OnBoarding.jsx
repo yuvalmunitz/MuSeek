@@ -1,30 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Button, 
-  Container, 
-  Box, 
-  Typography, 
-  Paper, 
-  FormControlLabel, 
-  Checkbox, 
+import {
+  Button,
+  Container,
+  Box,
+  Typography,
+  Paper,
+  FormControlLabel,
+  Checkbox,
   Radio,
   RadioGroup,
-  Dialog, 
-  DialogTitle, 
-  DialogContent, 
-  DialogActions, 
-  CircularProgress 
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  CircularProgress
 } from '@mui/material';
 import { styled } from '@mui/system';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../../firebase-config';
-import { 
-  getOrCreateUser, 
-  updateUserGenres, 
-  updateUserType, 
-  updateUserPerformer, 
-  updateUserRecorder, 
-  updateUserExperience 
+import {
+  getOrCreateUser,
+  updateUserGenres,
+  updateUserType,
+  updateUserPerformer,
+  updateUserRecorder,
+  updateUserExperience
 } from '../../firestore/users';
 import questions from './Questions';
 
@@ -81,6 +81,7 @@ const OutlinedStyledButton = styled(Button)(({ theme }) => ({
   },
   margin: theme.spacing(1),
 }));
+
 const OnBoarding = () => {
   const [answers, setAnswers] = useState({
     genres: [],
@@ -89,6 +90,7 @@ const OnBoarding = () => {
     recorder: "",
     experience: ""
   });
+  const [missingAnswers, setMissingAnswers] = useState(false);
   const [openCopyrightDialog, setOpenCopyrightDialog] = useState(false);
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -120,7 +122,6 @@ const OnBoarding = () => {
     return () => unsubscribe();
   }, [navigate]);
 
-
   const handleToggle = (field, option) => {
     setAnswers((prev) => {
       const newAnswers = { ...prev };
@@ -129,7 +130,7 @@ const OnBoarding = () => {
         if (!newAnswers[field]) newAnswers[field] = [];
         if (newAnswers[field].includes(option)) {
           newAnswers[field] = newAnswers[field].filter(
-            (answer) => answer !== option
+              (answer) => answer !== option
           );
         } else {
           newAnswers[field] = [...newAnswers[field], option];
@@ -142,6 +143,14 @@ const OnBoarding = () => {
   };
 
   const handleSubmit = async () => {
+    const requiredFields = ['genres', 'userType', 'performer', 'recorder', 'experience'];
+    const hasMissingAnswers = requiredFields.some(field => !answers[field] || answers[field].length === 0);
+
+    if (hasMissingAnswers) {
+      setMissingAnswers(true);
+      return;
+    }
+
     if (user) {
       try {
         await updateUserGenres(user.id, answers.genres);
@@ -149,7 +158,7 @@ const OnBoarding = () => {
         await updateUserPerformer(user.id, answers.performer);
         await updateUserRecorder(user.id, answers.recorder);
         await updateUserExperience(user.id, answers.experience);
-        
+
         console.log('Onboarding answers saved:', answers);
         setOpenCopyrightDialog(true);
       } catch (error) {
@@ -161,9 +170,9 @@ const OnBoarding = () => {
     }
   };
 
-  // const handleSkip = () => {
-  //   navigate('/Home');
-  // };
+  const handleCloseMissingAnswers = () => {
+    setMissingAnswers(false);
+  };
 
   const handleAgree = () => {
     setOpenCopyrightDialog(false);
@@ -172,111 +181,122 @@ const OnBoarding = () => {
 
   const handleDisagree = () => {
     setOpenCopyrightDialog(false);
-    // Optionally, you can show a message or take other actions if the user disagrees
   };
+
   if (loading) {
     return (
-      <Container>
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
-          <CircularProgress />
-          <Typography variant="h6" style={{ marginLeft: 20 }}>Loading user data...</Typography>
-        </Box>
-      </Container>
+        <Container>
+          <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+            <CircularProgress />
+            <Typography variant="h6" style={{ marginLeft: 20 }}>Loading user data...</Typography>
+          </Box>
+        </Container>
     );
   }
 
   if (error) {
     return (
-      <Container>
-        <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" minHeight="100vh">
-          <Typography color="error" gutterBottom>{error}</Typography>
-          <Button 
-            variant="contained" 
-            color="primary" 
-            onClick={() => window.location.reload()}
-          >
-            Retry
-          </Button>
-        </Box>
-      </Container>
+        <Container>
+          <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" minHeight="100vh">
+            <Typography color="error" gutterBottom>{error}</Typography>
+            <Button
+                variant="contained"
+                color="primary"
+                onClick={() => window.location.reload()}
+            >
+              Retry
+            </Button>
+          </Box>
+        </Container>
     );
   }
 
   if (!user) {
     return (
-      <Container>
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
-          <Typography>No user found. Please <Button onClick={() => navigate('/register')}>register</Button> or <Button onClick={() => navigate('/login')}>login</Button>.</Typography>
-        </Box>
-      </Container>
+        <Container>
+          <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+            <Typography>No user found. Please <Button onClick={() => navigate('/register')}>register</Button> or <Button onClick={() => navigate('/login')}>login</Button>.</Typography>
+          </Box>
+        </Container>
     );
   }
 
   return (
-    <StyledContainer>
-      <Typography variant="h4" gutterBottom>
-        Music Taste Questionnaire
-      </Typography>
-      <Typography variant="body1" paragraph>
-        Please answer the following questions to help us personalize your experience.
-      </Typography>
-      {questions.map((q, index) => (
-        <StyledPaper key={index} elevation={3}>
-          <Typography variant="h6" gutterBottom>
-            {q.question}
-          </Typography>
-          {q.isMultipleChoice ? (
-            <Box>
-              {q.options.map((option) => (
-                <FormControlLabel
-                  key={option}
-                  control={
-                    <StyledCheckbox
-                      checked={answers[q.field]?.includes(option) || false}
-                      onChange={() => handleToggle(q.field, option)}
-                    />
-                  }
-                  label={option}
-                />
-              ))}
-            </Box>
-          ) : (
-            <RadioGroup
-              value={answers[q.field] || ''}
-              onChange={(e) => handleToggle(q.field, e.target.value)}
-            >
-              {q.options.map((option) => (
-                <FormControlLabel
-                  key={option}
-                  value={option}
-                  control={<StyledRadio />}
-                  label={option}
-                />
-              ))}
-            </RadioGroup>
-          )}
-        </StyledPaper>
-      ))}
-      <Box mt={3}>
-        <StyledButton onClick={handleSubmit} variant="contained">
-          Submit
-        </StyledButton>
-        {/* <StyledButton onClick={handleSkip} variant="outlined">
-          Skip
-        </StyledButton> */}
-      </Box>
-      <Typography variant="body2" mt={2} color="textSecondary">
-        Disclaimer: By pressing Submit or Skip, you can proceed to the main application. Your answers will be saved if you choose to submit.
-      </Typography>
+      <StyledContainer>
+        <Typography variant="h4" gutterBottom>
+          Music Taste Questionnaire
+        </Typography>
+        <Typography variant="body1" paragraph>
+          Please answer the following questions to help us personalize your experience.
+        </Typography>
+        {questions.map((q, index) => (
+            <StyledPaper key={index} elevation={3}>
+              <Typography variant="h6" gutterBottom>
+                {q.question}
+              </Typography>
+              {q.isMultipleChoice ? (
+                  <Box>
+                    {q.options.map((option) => (
+                        <FormControlLabel
+                            key={option}
+                            control={
+                              <StyledCheckbox
+                                  checked={answers[q.field]?.includes(option) || false}
+                                  onChange={() => handleToggle(q.field, option)}
+                              />
+                            }
+                            label={option}
+                        />
+                    ))}
+                  </Box>
+              ) : (
+                  <RadioGroup
+                      value={answers[q.field] || ''}
+                      onChange={(e) => handleToggle(q.field, e.target.value)}
+                  >
+                    {q.options.map((option) => (
+                        <FormControlLabel
+                            key={option}
+                            value={option}
+                            control={<StyledRadio />}
+                            label={option}
+                        />
+                    ))}
+                  </RadioGroup>
+              )}
+            </StyledPaper>
+        ))}
+        <Box mt={3}>
+          <StyledButton onClick={handleSubmit} variant="contained">
+            Submit
+          </StyledButton>
+        </Box>
+        <Typography variant="body2" mt={2} color="textSecondary">
+          Disclaimer: By pressing Submit or Skip, you can proceed to the main application. Your answers will be saved if you choose to submit.
+        </Typography>
 
-      <StyledDialog open={openCopyrightDialog} onClose={handleDisagree}>
-        <DialogTitle>Copyright Agreement</DialogTitle>
-        <DialogContent>
-          <Typography>
-            By clicking "Agree", you acknowledge and agree that all lyrics and compositions you encounter on this website are protected under copyright laws. You agree to respect these copyrights and not to use, reproduce, or distribute this content without proper authorization.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
+        <StyledDialog open={missingAnswers} onClose={handleCloseMissingAnswers}>
+          <DialogTitle>Missing Answers</DialogTitle>
+          <DialogContent>
+            <Typography>
+              Please answer all the questions before submitting the form.
+            </Typography>
+          </DialogContent>
+          <DialogActions>
+            <StyledButton onClick={handleCloseMissingAnswers} variant="contained">
+              OK
+            </StyledButton>
+          </DialogActions>
+        </StyledDialog>
+
+        <StyledDialog open={openCopyrightDialog} onClose={handleDisagree}>
+          <DialogTitle>Copyright Agreement</DialogTitle>
+          <DialogContent>
+            <Typography>
+              By clicking "Agree", you acknowledge and agree that all lyrics and compositions you encounter on this website are protected under copyright laws. You agree to respect these copyrights and not to use, reproduce, or distribute this content without proper authorization.
+            </Typography>
+          </DialogContent>
+          <DialogActions>
           <OutlinedStyledButton onClick={handleDisagree} variant="outlined">
             Disagree
           </OutlinedStyledButton>

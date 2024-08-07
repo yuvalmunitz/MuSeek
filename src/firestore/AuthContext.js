@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { auth } from '../firebase-config'; // Adjust the import according to your project structure
+import React, {createContext, useContext, useEffect, useState} from 'react';
+import {auth} from '../firebase-config'; // Adjust the import according to your project structure
 
 const AuthContext = createContext();
 
@@ -11,7 +11,7 @@ export function AuthProvider({ children }) {
     const [currentUser, setCurrentUser] = useState(null);
 
     useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged(user => {
+        return auth.onAuthStateChanged(user => {
             if (user) {
                 setCurrentUser({
                     uid: user.uid,
@@ -23,12 +23,14 @@ export function AuthProvider({ children }) {
                 setCurrentUser(null);
             }
         });
-
-        return unsubscribe;
     }, []);
 
+    const signOut = () => {
+        return auth.signOut();
+    };
+
     return (
-        <AuthContext.Provider value={{ currentUser }}>
+        <AuthContext.Provider value={{ currentUser, signOut }}>
             {children}
         </AuthContext.Provider>
     );

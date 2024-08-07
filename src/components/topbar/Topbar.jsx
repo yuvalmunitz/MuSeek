@@ -1,13 +1,11 @@
-import React from 'react';
-import { useEffect, useState } from 'react';
+// src/components/topbar/Topbar.jsx
+import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebase-config';
 import { useAuth } from '../../firestore/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
-import { Chat } from '@mui/icons-material';
-import { Star } from '@mui/icons-material';
-import { Home } from '@mui/icons-material';
+import { Chat, Star, Home } from '@mui/icons-material';
 
 const TopbarContainer = styled.div`
     height: 60px;
@@ -84,32 +82,6 @@ const TopbarIconItem = styled.div`
     }
 `;
 
-const FavoritesButton = styled(StyledButton)`
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 6px 12px;
-    margin-right: 10px;
-    transition: color 0.3s ease;
-
-    &:hover {
-        color: #d7ccc8;
-    }
-`;
-
-const HomeButton = styled(StyledButton)`
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 6px 12px;
-    margin-right: 10px;
-    transition: color 0.3s ease;
-
-    &:hover {
-        color: #d7ccc8;
-    }
-`;
-
 const TopbarImg = styled.img`
     width: 32px;
     height: 32px;
@@ -130,12 +102,34 @@ const UnreadBadge = styled.span`
     font-size: 12px;
 `;
 
+const DropdownMenu = styled.div`
+    position: absolute;
+    top: 40px;
+    right: 0;
+    background-color: white;
+    color: black;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+`;
+
+const DropdownItem = styled.div`
+    padding: 10px 20px;
+    cursor: pointer;
+
+    &:hover {
+        background-color: #f0f0f0;
+    }
+`;
+
 export default function Topbar() {
     const navigate = useNavigate();
     const location = useLocation();
-    const { currentUser } = useAuth();
+    const { currentUser, signOut } = useAuth();
     const [imgError, setImgError] = useState(false);
     const [unreadMessages, setUnreadMessages] = useState(0);
+    const [dropdownOpen, setDropdownOpen] = useState(false);
 
     useEffect(() => {
         if (currentUser) {
@@ -176,7 +170,7 @@ export default function Topbar() {
     };
 
     const handleImageClick = () => {
-        navigate('/Profile');
+        setDropdownOpen(!dropdownOpen);
     };
 
     const handleImageError = () => {
@@ -185,6 +179,17 @@ export default function Topbar() {
 
     const handleLogoClick = () => {
         navigate('/Home');
+    };
+
+    const handleProfileClick = () => {
+        navigate('/Profile');
+        setDropdownOpen(false);
+    };
+
+    const handleLogoutClick = async () => {
+        navigate('/Register');
+        await signOut();
+        setDropdownOpen(false);
     };
 
     return (
@@ -196,14 +201,14 @@ export default function Topbar() {
             </TopbarCenter>
             <TopbarRight>
                 {location.pathname !== '/Home' && (
-                    <HomeButton onClick={handleNavigation}>
+                    <StyledButton onClick={handleNavigation}>
                         <Home />
-                    </HomeButton>
+                    </StyledButton>
                 )}
                 {location.pathname !== '/Favorites' && (
-                    <FavoritesButton onClick={handleFavClick}>
+                    <StyledButton onClick={handleFavClick}>
                         <Star />
-                    </FavoritesButton>
+                    </StyledButton>
                 )}
                 {location.pathname !== '/Inbox' && (
                     <TopbarIcons>
@@ -216,12 +221,20 @@ export default function Topbar() {
                     </TopbarIcons>
                 )}
                 {currentUser && (
-                    <TopbarImg
-                        src={imgError ? 'https://example.com/default-avatar.png' : currentUser.photoURL}
-                        alt={currentUser.displayName}
-                        onError={handleImageError}
-                        onClick={handleImageClick}
-                    />
+                    <div style={{ position: 'relative' }}>
+                        <TopbarImg
+                            src={currentUser.photoURL}
+                            alt={currentUser.displayName}
+                            onError={handleImageError}
+                            onClick={handleImageClick}
+                        />
+                        {dropdownOpen && (
+                            <DropdownMenu>
+                                <DropdownItem onClick={handleProfileClick}>Profile</DropdownItem>
+                                <DropdownItem onClick={handleLogoutClick}>Logout</DropdownItem>
+                            </DropdownMenu>
+                        )}
+                    </div>
                 )}
             </TopbarRight>
         </TopbarContainer>
