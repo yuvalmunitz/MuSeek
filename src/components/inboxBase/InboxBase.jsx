@@ -209,7 +209,7 @@ export default function InboxBase() {
   const formatNotificationForDialog = (notification) => {
     return {
       id: notification.id,
-      type: 'New Comment',
+      type: notification.type,
       user: {
         name: notification.username,
         id: notification.userId,
@@ -238,19 +238,38 @@ export default function InboxBase() {
     );
   };
 
+  // ... (previous code remains the same)
+
   const formatDate = (timestamp) => {
-    if (!timestamp) return '';
+    if (!timestamp || !timestamp.toDate) return '';
+    
     const date = timestamp.toDate();
     const now = new Date();
-    const diffTime = Math.abs(now - date);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays < 1) return 'Today';
+    const diffTime = now - date;
+    const diffSeconds = Math.floor(diffTime / 1000);
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    const diffHours = Math.floor(diffMinutes / 60);
+    const diffDays = Math.floor(diffHours / 24);
+  
+    // Check if it's today
+    if (diffDays === 0) {
+      if (diffSeconds < 60) return 'Just now';
+      if (diffMinutes < 60) return `${diffMinutes}m ago`;
+      return `${diffHours}h ago`;
+    }
+  
+    // Check if it's yesterday
     if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays}d`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)}w`;
-    return `${Math.floor(diffDays / 30)}m`;
+  
+    // For older dates
+    if (diffDays < 7) return `${diffDays}d ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
+    if (diffDays < 365) return `${Math.floor(diffDays / 30)}mo ago`;
+    return `${Math.floor(diffDays / 365)}y ago`;
   };
+  
+  
+// ... (rest of the code remains the same)
 
   return (
     <BackgroundContainer>
