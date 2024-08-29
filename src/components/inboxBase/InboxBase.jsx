@@ -106,26 +106,25 @@ export default function InboxBase() {
   const [messageDialogOpen, setMessageDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const { currentUser } = useAuth();
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
 
   useEffect(() => {
     if (currentUser) {
       const fetchNotifications = async () => {
         setLoading(true);
-        // First, get all posts by the current user
         const postsQuery = query(
-            collection(db, 'posts'),
-            where('userId', '==', currentUser.uid)
+          collection(db, 'posts'),
+          where('userId', '==', currentUser.uid)
         );
         const postSnapshots = await getDocs(postsQuery);
 
-        let allComments = [];
         const unsubscribes = [];
 
-        // For each post, get its comments
-        for (const postDoc of postSnapshots.docs) {
+        postSnapshots.forEach((postDoc) => {
           const commentsQuery = query(
-              collection(db, 'posts', postDoc.id, 'comments'),
-              orderBy('createdAt', 'desc')
+            collection(db, 'posts', postDoc.id, 'comments'),
+            orderBy('createdAt', 'desc')
           );
 
           const unsubscribe = onSnapshot(commentsQuery, (snapshot) => {
@@ -135,15 +134,20 @@ export default function InboxBase() {
               ...doc.data(),
               type: 'New Comment'
             }));
-            allComments = [...allComments, ...newComments];
-            setNotifications(allComments);
+            
+            setNotifications(prevNotifications => {
+              const updatedNotifications = prevNotifications.filter(
+                notification => notification.postId !== postDoc.id
+              );
+              return [...updatedNotifications, ...newComments];
+            });
+            
             setLoading(false);
           });
 
           unsubscribes.push(unsubscribe);
-        }
+        });
 
-        // Clean up the listeners when the component unmounts
         return () => unsubscribes.forEach(unsubscribe => unsubscribe());
       };
 
@@ -153,11 +157,18 @@ export default function InboxBase() {
 
   const handleDelete = async (event, notificationId, postId) => {
     event.stopPropagation();
+    setIsDeleting(true);
+    setDeleteError(null);
+
     try {
       await deleteDoc(doc(db, 'posts', postId, 'comments', notificationId));
-      setNotifications(notifications.filter(n => n.id !== notificationId));
+      // We don't need to manually update the state here anymore
+      // as the onSnapshot listener will catch this change
     } catch (error) {
       console.error("Error deleting comment: ", error);
+      setDeleteError("Failed to delete the notification. Please try again.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -168,7 +179,7 @@ export default function InboxBase() {
         isRead: true
       });
       setNotifications(notifications.map(n =>
-          n.id === notificationId ? { ...n, isRead: true } : n
+        n.id === notificationId ? { ...n, isRead: true } : n
       ));
     } catch (error) {
       console.error("Error marking notification as read:", error);
@@ -223,7 +234,7 @@ export default function InboxBase() {
 
   const handleDeleteNotification = (notificationId) => {
     setNotifications(prevNotifications =>
-        prevNotifications.filter(notification => notification.id !== notificationId)
+      prevNotifications.filter(notification => notification.id !== notificationId)
     );
   };
 
@@ -242,95 +253,103 @@ export default function InboxBase() {
   };
 
   return (
-      <BackgroundContainer>
-        <NotificationsContainer>
-          <NotificationHeader>
-            <Typography variant="h6">Reactions</Typography>
-          </NotificationHeader>
-          {loading ? (
-              <Box display="flex" justifyContent="center" alignItems="center" height="100%">
-                <CircularProgress />
-              </Box>
-          ) : (
-              <NotificationList>
-                {notifications.map((notification) => (
-                    <NotificationItem
-                        key={notification.id}
-                        button
-                        onClick={() => handleNotificationClick(notification)}
-                        isRead={notification.isRead}
-                    >
-                      <ListItemAvatar>
-                        <Avatar style={{ backgroundColor: notification.isRead ? '#ccc' : '#6d4c41' }}>
-                          <NotificationsIcon />
-                        </Avatar>
-                      </ListItemAvatar>
-                      <ListItemText
-                                    primary={`Title: ${notification.title}`}
-                          secondary={
-                            <React.Fragment>
-                              {`Author: ${notification.username}`}
-                              <br />
-                              {formatDate(notification.createdAt)}
-                              {notification.fileUrl && (
-                                  <Box component="span" ml={1}>
-                                    <AttachFileIcon fontSize="small" />
-                                  </Box>
-                              )}
-                            </React.Fragment>
-                          }
-                      />
-                      <Box>
-                        <IconButton onClick={(event) => handleDelete(event, notification.id, notification.postId)}>
-                          <DeleteIcon />
-                        </IconButton>
-                        <IconButton onClick={(event) => handleRead(event, notification.id, notification.postId)}>
-                          <CheckIcon />
-                        </IconButton>
-                        <IconButton onClick={(event) => handleMailTo(event, notification)}>
-                          <EmailIcon />
-                        </IconButton>
-                      </Box>
-                    </NotificationItem>
-                ))}
-              </NotificationList>
-          )}
-          <Box p={1} textAlign="center">
-            <Typography variant="caption" color="textSecondary">
-              MuSeek
-            </Typography>
+    <BackgroundContainer>
+      <NotificationsContainer>
+        <NotificationHeader>
+          <Typography variant="h6">Reactions</Typography>
+        </NotificationHeader>
+        {loading ? (
+          <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+            <CircularProgress />
           </Box>
-          <Dialog open={mailDialogOpen} onClose={handleMailDialogClose}>
-            <DialogTitle>Send Response</DialogTitle>
-            <DialogContent>
-              <DialogContentText>
-                Responding to: {selectedNotification?.type}
-              </DialogContentText>
-              <StyledTextField
-                  autoFocus
-                  margin="dense"
-                  label="Your Message"
-                  type="text"
-                  fullWidth
-                  variant="outlined"
-              />
-            </DialogContent>
-            <DialogActions>
-              <StyledButton onClick={handleMailDialogClose}>
-                Cancel
-              </StyledButton>
-              <StyledButton onClick={handleMailDialogClose}>
-                Send
-              </StyledButton>
-            </DialogActions>
-          </Dialog>
-          <MessageDialog
-              open={messageDialogOpen}
-              onClose={handleMessageDialogClose}
-              notification={selectedNotification}
-              onDelete={handleDeleteNotification}
-          />
-        </NotificationsContainer>
-      </BackgroundContainer>
+        ) : (
+          <NotificationList>
+            {notifications.map((notification) => (
+              <NotificationItem
+                key={notification.id}
+                button
+                onClick={() => handleNotificationClick(notification)}
+                isRead={notification.isRead}
+              >
+                <ListItemAvatar>
+                  <Avatar style={{ backgroundColor: notification.isRead ? '#ccc' : '#6d4c41' }}>
+                    <NotificationsIcon />
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  primary={`Title: ${notification.title}`}
+                  secondary={
+                    <React.Fragment>
+                      {`Author: ${notification.username}`}
+                      <br />
+                      {formatDate(notification.createdAt)}
+                      {notification.fileUrl && (
+                        <Box component="span" ml={1}>
+                          <AttachFileIcon fontSize="small" />
+                        </Box>
+                      )}
+                    </React.Fragment>
+                  }
+                />
+                <Box>
+                  <IconButton 
+                    onClick={(event) => handleDelete(event, notification.id, notification.postId)}
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? <CircularProgress size={24} /> : <DeleteIcon />}
+                  </IconButton>
+                  <IconButton onClick={(event) => handleRead(event, notification.id, notification.postId)}>
+                    <CheckIcon />
+                  </IconButton>
+                  <IconButton onClick={(event) => handleMailTo(event, notification)}>
+                    <EmailIcon />
+                  </IconButton>
+                </Box>
+              </NotificationItem>
+            ))}
+          </NotificationList>
+        )}
+        {deleteError && (
+          <Box p={2} bgcolor="error.main" color="error.contrastText">
+            <Typography>{deleteError}</Typography>
+          </Box>
+        )}
+        <Box p={1} textAlign="center">
+          <Typography variant="caption" color="textSecondary">
+            MuSeek
+          </Typography>
+        </Box>
+        <Dialog open={mailDialogOpen} onClose={handleMailDialogClose}>
+          <DialogTitle>Send Response</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Responding to: {selectedNotification?.type}
+            </DialogContentText>
+            <StyledTextField
+              autoFocus
+              margin="dense"
+              label="Your Message"
+              type="text"
+              fullWidth
+              variant="outlined"
+            />
+          </DialogContent>
+          <DialogActions>
+            <StyledButton onClick={handleMailDialogClose}>
+              Cancel
+            </StyledButton>
+            <StyledButton onClick={handleMailDialogClose}>
+              Send
+            </StyledButton>
+          </DialogActions>
+        </Dialog>
+        <MessageDialog
+          open={messageDialogOpen}
+          onClose={handleMessageDialogClose}
+          notification={selectedNotification}
+          onDelete={handleDeleteNotification}
+        />
+      </NotificationsContainer>
+    </BackgroundContainer>
   );
 }
