@@ -132,7 +132,7 @@ export default function InboxBase() {
               id: doc.id,
               postId: postDoc.id,
               ...doc.data(),
-              type: 'New Comment'
+              title: doc.data().title || 'New Comment'  // Use the comment title or default to "New Comment"
             }));
             
             setNotifications(prevNotifications => {
@@ -190,7 +190,7 @@ export default function InboxBase() {
     event.stopPropagation();
     // Use the comment author's email if available, otherwise fallback to test@gmail.com
     const email = notification.email || notification.userEmail || 'test@gmail.com';
-    const subject = encodeURIComponent(`Re: ${notification.type}`);
+    const subject = encodeURIComponent(`Re: ${notification.title}`);
     const body = encodeURIComponent(`Regarding your comment: "${notification.text}"`);
     window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
   };
@@ -209,7 +209,7 @@ export default function InboxBase() {
   const formatNotificationForDialog = (notification) => {
     return {
       id: notification.id,
-      type: notification.type,
+      type: notification.title,  // Use the title here instead of type
       user: {
         name: notification.username,
         id: notification.userId,
@@ -238,8 +238,6 @@ export default function InboxBase() {
     );
   };
 
-  // ... (previous code remains the same)
-
   const formatDate = (timestamp) => {
     if (!timestamp || !timestamp.toDate) return '';
     
@@ -267,9 +265,6 @@ export default function InboxBase() {
     if (diffDays < 365) return `${Math.floor(diffDays / 30)}mo ago`;
     return `${Math.floor(diffDays / 365)}y ago`;
   };
-  
-  
-// ... (rest of the code remains the same)
 
   return (
     <BackgroundContainer>
@@ -283,39 +278,35 @@ export default function InboxBase() {
           </Box>
         ) : (
           <NotificationList>
-            {notifications.map((notification) => (
-              <NotificationItem
-                key={notification.id}
-                button
-                onClick={() => handleNotificationClick(notification)}
-                isRead={notification.isRead}
-              >
-                <ListItemAvatar>
-                  <Avatar style={{ backgroundColor: notification.isRead ? '#ccc' : '#6d4c41' }}>
-                    <NotificationsIcon />
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText
-                  primary={`Title: ${notification.title}`}
-                  secondary={
-                    <React.Fragment>
-                      {`Author: ${notification.username}`}
-                      <br />
-                      {formatDate(notification.createdAt)}
-                      {notification.fileUrl && (
-                        <Box component="span" ml={1}>
-                          <AttachFileIcon fontSize="small" />
-                        </Box>
-                      )}
-                    </React.Fragment>
-                  }
-                />
-                <Box>
-                  <IconButton 
-                    onClick={(event) => handleDelete(event, notification.id, notification.postId)}
-                    disabled={isDeleting}
-                  >
-                    {isDeleting ? <CircularProgress size={24} /> : <DeleteIcon />}
+            {notifications.length > 0 ? (
+              notifications.map((notification) => (
+                <NotificationItem
+                  key={notification.id}
+                  isRead={notification.isRead}
+                  onClick={() => handleNotificationClick(notification)}
+                >
+                  <ListItemAvatar>
+                    <Avatar>
+                      <NotificationsIcon />
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={`Title: ${notification.title}`}  // Display the title here
+                    secondary={
+                      <React.Fragment>
+                        {`Author: ${notification.username}`}
+                        <br />
+                        {formatDate(notification.createdAt)}
+                        {notification.fileUrl && (
+                          <Box component="span" ml={1}>
+                            <AttachFileIcon fontSize="small" />
+                          </Box>
+                        )}
+                      </React.Fragment>
+                    }
+                  />
+                  <IconButton onClick={(event) => handleDelete(event, notification.id, notification.postId)}>
+                    <DeleteIcon />
                   </IconButton>
                   <IconButton onClick={(event) => handleRead(event, notification.id, notification.postId)}>
                     <CheckIcon />
@@ -323,52 +314,46 @@ export default function InboxBase() {
                   <IconButton onClick={(event) => handleMailTo(event, notification)}>
                     <EmailIcon />
                   </IconButton>
-                </Box>
-              </NotificationItem>
-            ))}
+                </NotificationItem>
+              ))
+            ) : (
+              <Typography variant="body2" color="textSecondary" align="center">
+                No notifications available
+              </Typography>
+            )}
           </NotificationList>
         )}
-        {deleteError && (
-          <Box p={2} bgcolor="error.main" color="error.contrastText">
-            <Typography>{deleteError}</Typography>
-          </Box>
-        )}
-        <Box p={1} textAlign="center">
-          <Typography variant="caption" color="textSecondary">
-            MuSeek
-          </Typography>
-        </Box>
-        <Dialog open={mailDialogOpen} onClose={handleMailDialogClose}>
-          <DialogTitle>Send Response</DialogTitle>
-          <DialogContent>
-            <DialogContentText>
-              Responding to: {selectedNotification?.type}
-            </DialogContentText>
-            <StyledTextField
-              autoFocus
-              margin="dense"
-              label="Your Message"
-              type="text"
-              fullWidth
-              variant="outlined"
-            />
-          </DialogContent>
-          <DialogActions>
-            <StyledButton onClick={handleMailDialogClose}>
-              Cancel
-            </StyledButton>
-            <StyledButton onClick={handleMailDialogClose}>
-              Send
-            </StyledButton>
-          </DialogActions>
-        </Dialog>
-        <MessageDialog
-          open={messageDialogOpen}
-          onClose={handleMessageDialogClose}
-          notification={selectedNotification}
-          onDelete={handleDeleteNotification}
-        />
       </NotificationsContainer>
+      <MessageDialog
+        open={messageDialogOpen}
+        onClose={handleMessageDialogClose}
+        notification={selectedNotification}
+      />
+      <Dialog open={mailDialogOpen} onClose={handleMailDialogClose}>
+        <DialogTitle>Respond to {selectedNotification?.username}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Write your message below to respond to {selectedNotification?.username}.
+          </DialogContentText>
+          <StyledTextField
+            autoFocus
+            margin="dense"
+            label="Message"
+            fullWidth
+            multiline
+            rows={4}
+            variant="outlined"
+          />
+        </DialogContent>
+        <DialogActions>
+          <StyledButton onClick={handleMailDialogClose}>
+            Cancel
+          </StyledButton>
+          <StyledButton onClick={handleMailDialogClose}>
+            Send
+          </StyledButton>
+        </DialogActions>
+      </Dialog>
     </BackgroundContainer>
   );
 }
